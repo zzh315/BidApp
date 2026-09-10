@@ -67,9 +67,19 @@ Keep that link to yourself. It contains your limit, which is the one number you 
 Supported parameters: `name`, `open`, `reserve`, `target`, `ceiling`, `step`, `loan`, `gov`, `funds`,
 `mtg`, `other`.
 
+Unlike the form, **URL parameters are in whole dollars** (`ceiling=710000`, not `710`). The Copy button
+writes them for you, so this only matters if you hand-edit a link.
+
 ---
 
 ## What you enter
+
+**Every money field is in thousands.** Type `670` for $670,000 and `1` for a $1,000 increment;
+decimals work, so `7.3` is $7,300. Each field echoes what it means in dollars directly underneath, and
+turns red past $50m — so typing `670,000` out of habit shows `= $670,000,000` rather than silently
+disabling your hard stop. Displays throughout the app stay in full dollars.
+
+Government equity is a percentage and mortgages to register is a count; both are marked accordingly.
 
 | Field | Meaning |
 |---|---|

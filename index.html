@@ -100,8 +100,20 @@ body{
 /* ---------- current bid ---------- */
 .bidbox{padding:14px 14px 12px}
 .bidrow{display:flex; align-items:center; gap:10px}
+.bidwrap{
+  flex:1; min-width:0; display:flex; align-items:baseline;
+  justify-content:center; gap:5px;
+}
+.unit{
+  font-family:var(--mono); font-size:14px; font-weight:500;
+  color:var(--ink-3); flex:none;
+}
+.bid-echo{
+  margin:2px 0 0; text-align:center; font-family:var(--mono);
+  font-size:12.5px; color:var(--ink-3); font-variant-numeric:tabular-nums;
+}
 .bidinput{
-  flex:1; min-width:0; width:100%;
+  flex:0 1 auto; min-width:0; width:100%;
   font-family:var(--display); font-weight:700; font-size:clamp(34px,10vw,46px);
   font-variant-numeric:tabular-nums; letter-spacing:-.02em;
   background:transparent; border:0; color:var(--ink); padding:0;
@@ -230,6 +242,21 @@ details.costs[open] summary::after{content:"−"}
 /* ---------- setup ---------- */
 .field{display:flex; flex-direction:column; gap:4px}
 .field label{font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-3); font-weight:600}
+.ku{
+  font-family:var(--mono); font-size:10px; letter-spacing:0;
+  text-transform:none; color:var(--accent); font-weight:500;
+  border:1px solid var(--line-2); border-radius:4px; padding:0 4px; margin-left:3px;
+}
+.unitbanner{
+  background:var(--surface-2); border:1px solid var(--line-2); border-left:3px solid var(--accent);
+  border-radius:8px; padding:10px 12px; font-size:13px; color:var(--ink-2); line-height:1.45;
+}
+.unitbanner strong{color:var(--ink); font-family:var(--mono); font-weight:500}
+.echo{
+  font-family:var(--mono); font-size:11px; color:var(--ink-3);
+  font-variant-numeric:tabular-nums;
+}
+.echo.bad{color:var(--stop); font-weight:500}
 .field input{
   font-family:var(--mono); font-size:16px; padding:9px 10px;
   border:1px solid var(--line-2); border-radius:7px;
@@ -283,9 +310,14 @@ h2.sec{
     <p class="eyebrow">Highest bid on the floor</p>
     <div class="bidrow">
       <button class="step" id="down" type="button" aria-label="Lower the current bid">−</button>
-      <input class="bidinput" id="bid" inputmode="numeric" autocomplete="off" aria-label="Highest bid on the floor">
+      <span class="bidwrap">
+        <input class="bidinput" id="bid" inputmode="decimal" autocomplete="off"
+               aria-label="Highest bid on the floor, in thousands of dollars">
+        <span class="unit" aria-hidden="true">$k</span>
+      </span>
       <button class="step" id="up" type="button" aria-label="Raise the current bid">+</button>
     </div>
+    <p class="bid-echo" id="bidEcho">$500,000</p>
     <div class="chips" id="chips"></div>
     <div class="seg who" role="group" aria-label="Whose bid is it" style="margin-top:12px">
       <button type="button" data-who="rival" aria-pressed="true">A rival's bid</button>
@@ -376,6 +408,11 @@ h2.sec{
 <!-- ==================== SETUP ==================== -->
 <main id="setup" class="stack" hidden style="padding-top:14px">
 
+  <p class="unitbanner">
+    Every money field is in <strong>thousands</strong>. Type <strong>670</strong> for $670,000 and
+    <strong>1</strong> for a $1,000 increment. Decimals are fine — <strong>7.3</strong> means $7,300.
+  </p>
+
   <h2 class="sec">The auction</h2>
   <section class="panel stack-sm">
     <div class="field">
@@ -384,31 +421,31 @@ h2.sec{
     </div>
     <div class="grid2">
       <div class="field">
-        <label for="fOpen">Opening bid</label>
-        <input id="fOpen" inputmode="numeric" autocomplete="off">
+        <label for="fOpen">Opening bid <span class="ku">$k</span></label>
+        <input id="fOpen" inputmode="decimal" autocomplete="off">
       </div>
       <div class="field">
-        <label for="fReserve">Reserve estimate</label>
-        <input id="fReserve" inputmode="numeric" autocomplete="off">
+        <label for="fReserve">Reserve estimate <span class="ku">$k</span></label>
+        <input id="fReserve" inputmode="decimal" autocomplete="off">
       </div>
     </div>
     <p class="hint field">Your guess at the vendor's reserve. Below it the property cannot sell, so the
       goal is to be top bidder cheaply for the pass-in. Leave 0 if you have no read.</p>
     <div class="grid2">
       <div class="field">
-        <label for="fTarget">Target</label>
-        <input id="fTarget" inputmode="numeric" autocomplete="off">
+        <label for="fTarget">Target <span class="ku">$k</span></label>
+        <input id="fTarget" inputmode="decimal" autocomplete="off">
       </div>
       <div class="field">
-        <label for="fCeiling">Hard stop</label>
-        <input id="fCeiling" inputmode="numeric" autocomplete="off">
+        <label for="fCeiling">Hard stop <span class="ku">$k</span></label>
+        <input id="fCeiling" inputmode="decimal" autocomplete="off">
       </div>
     </div>
     <p class="hint field">Target is the number you want to win at. Hard stop is the number you will not
       cross. Set them equal if you only want one limit.</p>
     <div class="field">
-      <label for="fStep">Smallest increment</label>
-      <input id="fStep" inputmode="numeric" autocomplete="off">
+      <label for="fStep">Smallest increment <span class="ku">$k</span></label>
+      <input id="fStep" inputmode="decimal" autocomplete="off">
     </div>
   </section>
 
@@ -416,11 +453,11 @@ h2.sec{
   <section class="panel stack-sm">
     <div class="grid2">
       <div class="field">
-        <label for="fLoan">Loan drawn</label>
-        <input id="fLoan" inputmode="numeric" autocomplete="off">
+        <label for="fLoan">Loan drawn <span class="ku">$k</span></label>
+        <input id="fLoan" inputmode="decimal" autocomplete="off">
       </div>
       <div class="field">
-        <label for="fGov">Government equity %</label>
+        <label for="fGov">Government equity <span class="ku">%</span></label>
         <input id="fGov" inputmode="decimal" autocomplete="off">
       </div>
     </div>
@@ -428,19 +465,19 @@ h2.sec{
       existing home. Enter 0 if you are not using a scheme.</p>
     <div class="grid2">
       <div class="field">
-        <label for="fFunds">Funds available</label>
-        <input id="fFunds" inputmode="numeric" autocomplete="off">
+        <label for="fFunds">Funds available <span class="ku">$k</span></label>
+        <input id="fFunds" inputmode="decimal" autocomplete="off">
       </div>
       <div class="field">
-        <label for="fMtg">Mortgages to register</label>
+        <label for="fMtg">Mortgages to register <span class="ku">no.</span></label>
         <input id="fMtg" inputmode="numeric" autocomplete="off">
       </div>
     </div>
     <p class="hint field">Count the lender's mortgage plus any second mortgage a shared-equity scheme
       registers over the title.</p>
     <div class="field">
-      <label for="fOther">Other costs</label>
-      <input id="fOther" inputmode="numeric" autocomplete="off">
+      <label for="fOther">Other costs <span class="ku">$k</span></label>
+      <input id="fOther" inputmode="decimal" autocomplete="off">
       <span class="hint">Conveyancing and disbursements, building and pest, council rates and water
         adjustments, first-year insurance, lender settlement fees, contingency. Registration fees and
         stamp duty are calculated separately.</span>
@@ -503,6 +540,15 @@ function moneyK(v){
   const a = Math.abs(v), p = v<0 ? "−$" : "$";
   if(a>=1000) return p + (a/1000).toFixed(a>=100000?0:1).replace(/\.0$/,"") + "k";
   return p + Math.round(a);
+}
+
+// Money is TYPED in thousands but STORED and calculated in dollars, so the duty
+// thresholds and the $2.34-per-$1,000 registration fee stay correct.
+const K = 1000;
+const MONEY_FIELDS = new Set(["open","reserve","target","ceiling","step","loan","funds","other"]);
+function toK(v){
+  const s = v / K;
+  return Number.isInteger(s) ? String(s) : String(+s.toFixed(3));
 }
 function costsAt(price){
   const duty = fhbDuty(price);
@@ -621,7 +667,8 @@ function render(){
   $("barStop").textContent = money(cfg.ceiling);
   $("exampleFlag").hidden = !st.example;
 
-  if(!bidFocused) $("bid").value = money(st.bid);
+  if(!bidFocused) $("bid").value = toK(st.bid);
+  $("bidEcho").textContent = money(st.bid);
 
   document.querySelectorAll("[data-who]").forEach(b=>
     b.setAttribute("aria-pressed", String((b.dataset.who==="mine")===st.mine)));
@@ -748,8 +795,8 @@ function load(){
 
 const parseNum = s => { const v = parseFloat(String(s).replace(/[^0-9.]/g,"")); return isNaN(v)?0:v; };
 
-$("bid").addEventListener("focus", e=>{ bidFocused=true; e.target.value = String(st.bid); e.target.select(); });
-$("bid").addEventListener("blur",  e=>{ bidFocused=false; setBid(parseNum(e.target.value)); render(); });
+$("bid").addEventListener("focus", e=>{ bidFocused=true; e.target.select(); });
+$("bid").addEventListener("blur",  e=>{ bidFocused=false; setBid(parseNum(e.target.value)*K); render(); });
 $("bid").addEventListener("keydown", e=>{ if(e.key==="Enter") e.target.blur(); });
 
 $("up").addEventListener("click",   ()=> setBid(st.bid + cfg.step));
@@ -810,14 +857,40 @@ const F = {name:"fName", open:"fOpen", reserve:"fReserve", target:"fTarget",
            ceiling:"fCeiling", step:"fStep", loan:"fLoan", gov:"fGov",
            funds:"fFunds", mtg:"fMtg", other:"fOther"};
 
+// Each money field echoes what it actually means in dollars, so typing 670,000
+// out of habit shows "$670,000,000" in red instead of silently disabling the
+// hard stop.
+const echoUpdaters = [];
+MONEY_FIELDS.forEach(k=>{
+  const inp = $(F[k]);
+  const out = document.createElement("span");
+  out.className = "echo";
+  inp.parentNode.appendChild(out);
+  const upd = ()=>{
+    const v = parseNum(inp.value) * K;
+    out.textContent = v ? "= " + money(v) : "";
+    out.classList.toggle("bad", v > 50000000);
+  };
+  inp.addEventListener("input", upd);
+  echoUpdaters.push(upd);
+});
+const refreshEchoes = ()=> echoUpdaters.forEach(f=>f());
+
 function openSetup(){
-  for(const k in F) $(F[k]).value = cfg[k];
+  for(const k in F) $(F[k]).value = MONEY_FIELDS.has(k) ? toK(cfg[k]) : cfg[k];
+  refreshEchoes();
   $("live").hidden = true; $("setup").hidden = false;
   window.scrollTo(0,0);
 }
+function readSetup(){
+  for(const k in F){
+    if(k === "name") cfg.name = $(F[k]).value.trim() || "Auction";
+    else cfg[k] = parseNum($(F[k]).value) * (MONEY_FIELDS.has(k) ? K : 1);
+  }
+}
 function closeSetup(){
   const prevOpen = cfg.open;
-  for(const k in F) cfg[k] = k==="name" ? ($(F[k]).value.trim() || "Auction") : parseNum($(F[k]).value);
+  readSetup();
   if(cfg.step < 100) cfg.step = 100;
   if(cfg.ceiling < cfg.target) cfg.ceiling = cfg.target;
   if(st.example || st.bid < cfg.open || cfg.open !== prevOpen){ st.bid = cfg.open; st.log = []; }
@@ -831,7 +904,7 @@ $("setupBtn").addEventListener("click", ()=> $("setup").hidden ? openSetup() : c
 $("saveBtn").addEventListener("click", closeSetup);
 
 $("linkBtn").addEventListener("click", ()=>{
-  for(const k in F) cfg[k] = k==="name" ? ($(F[k]).value.trim()||"Auction") : parseNum($(F[k]).value);
+  readSetup();
   const q = new URLSearchParams();
   for(const k in F) q.set(k, cfg[k]);
   const url = location.origin + location.pathname + "?" + q.toString();
