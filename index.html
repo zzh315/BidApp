@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#1E4E5A">
 <meta name="description" content="Auction bidding assistant: what to bid, how many bids you have left, and what that bid really costs after stamp duty and fees.">
@@ -24,6 +24,10 @@
   --display:"Archivo","Helvetica Neue",Arial,sans-serif;
   --ui:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+
+  /* iPhone 17 logical viewport: 402 x 874 CSS px, 1206 x 2622 at DPR 3 */
+  --vp-w:402px; --vp-h:874px;
+  --stage:#E4E2DC; --bezel:#23282C; --bezel-edge:rgba(255,255,255,.12);
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
@@ -35,6 +39,7 @@
     --on-semantic:#FFFFFF;
     --focus:#4FB3C4;
     --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
+    --stage:#080B0D; --bezel:#1B2024; --bezel-edge:rgba(255,255,255,.08);
   }
 }
 :root[data-theme="dark"]{
@@ -46,15 +51,37 @@
   --on-semantic:#FFFFFF;
   --focus:#4FB3C4;
   --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.3);
+  --stage:#080B0D; --bezel:#1B2024; --bezel-edge:rgba(255,255,255,.08);
 }
 
 *{box-sizing:border-box}
 body{
-  margin:0; background:var(--ground); color:var(--ink);
+  margin:0; background:var(--stage); color:var(--ink);
   font-family:var(--ui); font-size:15px; line-height:1.45;
   -webkit-text-size-adjust:100%;
+  min-height:100dvh; display:grid; place-items:center;
+  padding:24px 16px;
 }
-.wrap{max-width:560px; margin:0 auto; padding-inline:16px; padding-block:0 40px}
+
+/* ---------- iPhone 17 shell ---------- */
+.device{
+  flex:none; background:var(--bezel); padding:11px;
+  border-radius:58px; box-shadow:
+    0 0 0 1px var(--bezel-edge) inset,
+    0 2px 6px rgba(0,0,0,.28),
+    0 26px 60px -12px rgba(0,0,0,.45);
+}
+.screen{
+  width:var(--vp-w);
+  height:min(var(--vp-h), calc(100dvh - 70px));
+  border-radius:47px; overflow:hidden auto; position:relative;
+  container-type:inline-size;
+  background:var(--ground); overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.screen::-webkit-scrollbar{width:0; height:0}
+.wrap{margin:0 auto; padding-inline:16px; padding-block:0 40px}
 
 /* ---------- fixed limit bar ---------- */
 .limitbar{
@@ -63,7 +90,6 @@ body{
   padding:10px 16px;
 }
 .lb-inner{
-  max-width:560px; margin:0 auto;
   display:flex; align-items:center; gap:12px;
 }
 .limitbar .lb-name{
@@ -114,7 +140,7 @@ body{
 }
 .bidinput{
   flex:0 1 auto; min-width:0; width:100%;
-  font-family:var(--display); font-weight:700; font-size:clamp(34px,10vw,46px);
+  font-family:var(--display); font-weight:700; font-size:clamp(34px,10cqw,46px);
   font-variant-numeric:tabular-nums; letter-spacing:-.02em;
   background:transparent; border:0; color:var(--ink); padding:0;
   text-align:center;
@@ -126,11 +152,11 @@ body{
   border-radius:50%; font-size:22px; font-family:var(--display); line-height:1;
 }
 .step:active{background:var(--line)}
-.chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:10px}
+.chips{display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:10px}
 .chip{
-  appearance:none; cursor:pointer; font-family:var(--mono); font-size:12px;
-  padding:7px 9px; border-radius:6px; border:1px solid var(--line-2);
-  background:var(--surface); color:var(--ink-2); flex:1 1 auto; min-width:56px;
+  appearance:none; cursor:pointer; font-family:var(--mono); font-size:12.5px;
+  padding:8px 6px; border-radius:6px; border:1px solid var(--line-2);
+  background:var(--surface); color:var(--ink-2); min-width:0;
 }
 .chip:active{background:var(--surface-2)}
 .chip.minus{color:var(--ink-3)}
@@ -162,7 +188,7 @@ body{
 }
 .v-main{
   font-family:var(--display); font-weight:700; letter-spacing:-.02em;
-  font-size:clamp(32px,9.5vw,44px); line-height:1.02; margin:0;
+  font-size:clamp(32px,9.5cqw,44px); line-height:1.02; margin:0;
   font-variant-numeric:tabular-nums; text-wrap:balance;
 }
 .v-sub{margin:10px 0 0; font-size:13.5px; line-height:1.4; opacity:.92; text-wrap:pretty}
@@ -284,6 +310,14 @@ details.costs[open] summary::after{content:"−"}
   padding:9px 11px; font-size:12px; color:var(--ink-2); line-height:1.4;
 }
 [hidden]{display:none!important}
+/* A real phone is the screen — drop the shell entirely */
+@media (max-width:480px){
+  body{display:block; min-height:0; padding:0; background:var(--ground)}
+  .device{padding:0; border-radius:0; background:transparent; box-shadow:none}
+  .screen{width:auto; height:auto; border-radius:0; overflow:visible}
+  .limitbar{padding-top:calc(10px + env(safe-area-inset-top))}
+  .wrap{padding-bottom:calc(40px + env(safe-area-inset-bottom))}
+}
 @media (prefers-reduced-motion:no-preference){
   .verdict{transition:background-color .18s ease}
 }
@@ -294,6 +328,8 @@ details.costs[open] summary::after{content:"−"}
 </style>
 </head>
 <body>
+<div class="device">
+<div class="screen" id="screen">
 
 <div class="limitbar">
   <div class="lb-inner">
@@ -509,6 +545,9 @@ details.costs[open] summary::after{content:"−"}
 
 </div>
 
+</div><!-- /screen -->
+</div><!-- /device -->
+
 <script>
 "use strict";
 
@@ -671,6 +710,7 @@ function rungsLeft(){
 /* ---------------- render ---------------- */
 
 const $ = id => document.getElementById(id);
+const toTop = ()=>{ const s=$('screen'); if(s) s.scrollTop=0; window.scrollTo(0,0); };
 let bidFocused = false;
 
 function render(){
@@ -905,7 +945,7 @@ function openSetup(){
   for(const k in F) $(F[k]).value = MONEY_FIELDS.has(k) ? toK(cfg[k]) : cfg[k];
   refreshEchoes();
   $("live").hidden = true; $("setup").hidden = false;
-  window.scrollTo(0,0);
+  toTop();
 }
 function readSetup(){
   for(const k in F){
@@ -922,7 +962,7 @@ function closeSetup(){
   st.example = false;
   buildChips();
   $("setup").hidden = true; $("live").hidden = false;
-  window.scrollTo(0,0);
+  toTop();
   render();
 }
 $("setupBtn").addEventListener("click", ()=> $("setup").hidden ? openSetup() : closeSetup());

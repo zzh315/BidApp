@@ -7,6 +7,11 @@ what that bid actually costs you once stamp duty and every other fee is added.
 Built for Victorian residential auctions and the first-home-buyer stamp duty scale. No build step, no
 dependencies, no server — one `index.html`.
 
+It is a phone app first: the layout targets the **iPhone 17 viewport, 402 × 874 CSS px**. On a phone it
+fills the screen. On anything wider it renders inside a centred device frame at that exact width, so
+what you see on a laptop is what you get in your hand — type scales off the frame, not the browser
+window.
+
 ---
 
 ## Why it exists
