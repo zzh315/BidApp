@@ -52,12 +52,12 @@ page still works and falls back to system faces.
 
 ## Where your numbers live
 
-The committed defaults describe a plausible Victorian auction and are what a fresh browser starts
-from. Anything you change after that is kept in that browser's `localStorage`.
+The committed defaults are a live setup, not a placeholder, and are what a fresh browser starts from.
+Anything you change after that is kept in that browser's `localStorage`.
 
 ⚠️ **Committed defaults are public** — this repository included, because Pages on a free plan requires
-a public repo. If a figure is one you would not want read by the other side of a negotiation, a bid
-ceiling above all, keep it out of the defaults and pass it by prefill link instead.
+a public repo. A bid ceiling in the defaults is a bid ceiling anyone can read. If that matters for a
+given auction, reset the defaults to round placeholders and carry the real figures by prefill link.
 
 Two ways to load your own figures:
 

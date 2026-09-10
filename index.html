@@ -240,35 +240,45 @@ details.costs[open] summary::after{content:"−"}
 .btn.danger{color:var(--stop); border-color:var(--stop)}
 
 /* ---------- setup ---------- */
-.field{display:flex; flex-direction:column; gap:4px}
-.field label{font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-3); font-weight:600}
-.ku{
-  font-family:var(--mono); font-size:10px; letter-spacing:0;
-  text-transform:none; color:var(--accent); font-weight:500;
-  border:1px solid var(--line-2); border-radius:4px; padding:0 4px; margin-left:3px;
-}
 .unitbanner{
-  background:var(--surface-2); border:1px solid var(--line-2); border-left:3px solid var(--accent);
-  border-radius:8px; padding:10px 12px; font-size:13px; color:var(--ink-2); line-height:1.45;
+  background:var(--surface-2); border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0; padding:9px 12px; font-size:12.5px;
+  color:var(--ink-2); line-height:1.4; margin:0;
 }
 .unitbanner strong{color:var(--ink); font-family:var(--mono); font-weight:500}
-.echo{
+
+.phead{
+  font-family:var(--display); font-size:10.5px; font-weight:600;
+  text-transform:uppercase; letter-spacing:.11em; color:var(--ink-3);
+  margin:0 0 2px; padding-bottom:9px; border-bottom:1px solid var(--line);
+}
+.frow{display:flex; align-items:center; gap:12px; padding:10px 0 0}
+.frow label{
+  flex:1; min-width:0; font-size:13.5px; font-weight:500; color:var(--ink);
+}
+.inpwrap{
+  flex:none; width:132px; display:flex; align-items:center;
+  border:1px solid var(--line-2); border-radius:7px; background:var(--surface);
+}
+.inpwrap:focus-within{outline:2px solid var(--focus); outline-offset:1px; border-color:var(--focus)}
+.inpwrap input{
+  flex:1; width:auto; border:0; background:transparent; color:var(--ink);
+  font-family:var(--mono); font-size:16px; text-align:right;
+  padding:8px 2px 8px 9px; min-width:0;
+}
+.inpwrap input:focus{outline:none}
+.inpwrap .sfx{
   font-family:var(--mono); font-size:11px; color:var(--ink-3);
-  font-variant-numeric:tabular-nums;
+  padding:0 8px 0 4px; flex:none; width:30px;
 }
-.echo.bad{color:var(--stop); font-weight:500}
-.field input{
-  font-family:var(--mono); font-size:16px; padding:9px 10px;
-  border:1px solid var(--line-2); border-radius:7px;
-  background:var(--surface); color:var(--ink); width:100%;
+.inpwrap.wide{flex:1; width:auto; min-width:0}
+.inpwrap.wide input{width:100%; text-align:left; padding-right:9px}
+.fsub{
+  margin:3px 0 0; font-size:11.5px; color:var(--ink-3); line-height:1.35;
+  padding-left:1px;
 }
-.field input:focus{outline:2px solid var(--focus); outline-offset:1px}
-.field .hint{font-size:11px; color:var(--ink-3); line-height:1.35}
-.grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
-h2.sec{
-  font-family:var(--display); font-size:14px; font-weight:600; letter-spacing:.01em;
-  margin:4px 0 0; color:var(--ink); text-transform:uppercase;
-}
+.fsub .eq{font-family:var(--mono); color:var(--ink-2); font-variant-numeric:tabular-nums}
+.fsub .eq.bad{color:var(--stop); font-weight:500}
 .example-flag{
   background:var(--surface-2); border:1px dashed var(--line-2); border-radius:8px;
   padding:9px 11px; font-size:12px; color:var(--ink-2); line-height:1.4;
@@ -302,9 +312,7 @@ h2.sec{
 <!-- ==================== LIVE ==================== -->
 <main id="live" class="stack" style="padding-top:14px">
 
-  <div class="example-flag" id="exampleFlag">
-    Example auction loaded so you can see how it behaves. Tap <strong>⚙</strong> to enter your own numbers.
-  </div>
+  <div class="example-flag" id="exampleFlag"></div>
 
   <section class="panel bidbox">
     <p class="eyebrow">Highest bid on the floor</p>
@@ -317,7 +325,7 @@ h2.sec{
       </span>
       <button class="step" id="up" type="button" aria-label="Raise the current bid">+</button>
     </div>
-    <p class="bid-echo" id="bidEcho">$680,000</p>
+    <p class="bid-echo" id="bidEcho">$670,000</p>
     <div class="chips" id="chips"></div>
     <div class="seg who" role="group" aria-label="Whose bid is it" style="margin-top:12px">
       <button type="button" data-who="rival" aria-pressed="true">A rival's bid</button>
@@ -409,90 +417,93 @@ h2.sec{
 <main id="setup" class="stack" hidden style="padding-top:14px">
 
   <p class="unitbanner">
-    Every money field is in <strong>thousands</strong>. Type <strong>670</strong> for $670,000 and
-    <strong>1</strong> for a $1,000 increment. Decimals are fine — <strong>7.3</strong> means $7,300.
+    Money fields are in <strong>thousands</strong> — type <strong>670</strong> for $670,000.
   </p>
 
-  <h2 class="sec">The auction</h2>
-  <section class="panel stack-sm">
-    <div class="field">
+  <section class="panel">
+    <p class="phead">The auction</p>
+
+    <div class="frow">
       <label for="fName">Property</label>
-      <input id="fName" type="text" autocomplete="off">
+      <span class="inpwrap wide"><input id="fName" type="text" autocomplete="off"></span>
     </div>
-    <div class="grid2">
-      <div class="field">
-        <label for="fOpen">Opening bid <span class="ku">$k</span></label>
-        <input id="fOpen" inputmode="decimal" autocomplete="off">
-      </div>
-      <div class="field">
-        <label for="fReserve">Reserve estimate <span class="ku">$k</span></label>
-        <input id="fReserve" inputmode="decimal" autocomplete="off">
-      </div>
+
+    <div class="frow">
+      <label for="fOpen">Opening bid</label>
+      <span class="inpwrap"><input id="fOpen" inputmode="decimal" autocomplete="off"><span class="sfx">k</span></span>
     </div>
-    <p class="hint field">Your guess at the vendor's reserve. Below it the property cannot sell, so the
-      goal is to be top bidder cheaply for the pass-in. Leave 0 if you have no read.</p>
-    <div class="grid2">
-      <div class="field">
-        <label for="fTarget">Target <span class="ku">$k</span></label>
-        <input id="fTarget" inputmode="decimal" autocomplete="off">
-      </div>
-      <div class="field">
-        <label for="fCeiling">Hard stop <span class="ku">$k</span></label>
-        <input id="fCeiling" inputmode="decimal" autocomplete="off">
-      </div>
+    <p class="fsub" id="sub-open"></p>
+
+    <div class="frow">
+      <label for="fReserve">Reserve estimate</label>
+      <span class="inpwrap"><input id="fReserve" inputmode="decimal" autocomplete="off"
+        data-hint="below this it cannot sell; 0 if unknown"><span class="sfx">k</span></span>
     </div>
-    <p class="hint field">Target is the number you want to win at. Hard stop is the number you will not
-      cross. Set them equal if you only want one limit.</p>
-    <div class="field">
-      <label for="fStep">Smallest increment <span class="ku">$k</span></label>
-      <input id="fStep" inputmode="decimal" autocomplete="off">
+    <p class="fsub" id="sub-reserve"></p>
+
+    <div class="frow">
+      <label for="fTarget">Target</label>
+      <span class="inpwrap"><input id="fTarget" inputmode="decimal" autocomplete="off"
+        data-hint="the number you want to win at"><span class="sfx">k</span></span>
     </div>
+    <p class="fsub" id="sub-target"></p>
+
+    <div class="frow">
+      <label for="fCeiling">Hard stop</label>
+      <span class="inpwrap"><input id="fCeiling" inputmode="decimal" autocomplete="off"
+        data-hint="never suggested past this"><span class="sfx">k</span></span>
+    </div>
+    <p class="fsub" id="sub-ceiling"></p>
+
+    <div class="frow">
+      <label for="fStep">Smallest increment</label>
+      <span class="inpwrap"><input id="fStep" inputmode="decimal" autocomplete="off"><span class="sfx">k</span></span>
+    </div>
+    <p class="fsub" id="sub-step"></p>
   </section>
 
-  <h2 class="sec">The money</h2>
-  <section class="panel stack-sm">
-    <div class="grid2">
-      <div class="field">
-        <label for="fLoan">Loan drawn <span class="ku">$k</span></label>
-        <input id="fLoan" inputmode="decimal" autocomplete="off">
-      </div>
-      <div class="field">
-        <label for="fGov">Government equity <span class="ku">%</span></label>
-        <input id="fGov" inputmode="decimal" autocomplete="off">
-      </div>
+  <section class="panel">
+    <p class="phead">The money</p>
+
+    <div class="frow">
+      <label for="fLoan">Loan drawn</label>
+      <span class="inpwrap"><input id="fLoan" inputmode="decimal" autocomplete="off"><span class="sfx">k</span></span>
     </div>
-    <p class="hint field">Shared-equity share of the purchase price, e.g. 30 for Help to Buy on an
-      existing home. Enter 0 if you are not using a scheme.</p>
-    <div class="grid2">
-      <div class="field">
-        <label for="fFunds">Funds available <span class="ku">$k</span></label>
-        <input id="fFunds" inputmode="decimal" autocomplete="off">
-      </div>
-      <div class="field">
-        <label for="fMtg">Mortgages to register <span class="ku">no.</span></label>
-        <input id="fMtg" inputmode="numeric" autocomplete="off">
-      </div>
+    <p class="fsub" id="sub-loan"></p>
+
+    <div class="frow">
+      <label for="fGov">Government equity</label>
+      <span class="inpwrap"><input id="fGov" inputmode="decimal" autocomplete="off"
+        data-hint="30 for Help to Buy on an existing home; 0 for none"><span class="sfx">%</span></span>
     </div>
-    <p class="hint field">Count the lender's mortgage plus any second mortgage a shared-equity scheme
-      registers over the title.</p>
-    <div class="field">
-      <label for="fOther">Other costs <span class="ku">$k</span></label>
-      <input id="fOther" inputmode="decimal" autocomplete="off">
-      <span class="hint">Conveyancing and disbursements, building and pest, council rates and water
-        adjustments, first-year insurance, lender settlement fees, contingency. Registration fees and
-        stamp duty are calculated separately.</span>
+    <p class="fsub" id="sub-gov"></p>
+
+    <div class="frow">
+      <label for="fFunds">Funds available</label>
+      <span class="inpwrap"><input id="fFunds" inputmode="decimal" autocomplete="off"
+        data-hint="every dollar you can put in on settlement day"><span class="sfx">k</span></span>
     </div>
+    <p class="fsub" id="sub-funds"></p>
+
+    <div class="frow">
+      <label for="fMtg">Mortgages to register</label>
+      <span class="inpwrap"><input id="fMtg" inputmode="numeric" autocomplete="off"
+        data-hint="your lender&#39;s, plus a scheme&#39;s second mortgage"><span class="sfx">no.</span></span>
+    </div>
+    <p class="fsub" id="sub-mtg"></p>
+
+    <div class="frow">
+      <label for="fOther">Other costs</label>
+      <span class="inpwrap"><input id="fOther" inputmode="decimal" autocomplete="off"
+        data-hint="conveyancing, inspection, adjustments, insurance, buffer"><span class="sfx">k</span></span>
+    </div>
+    <p class="fsub" id="sub-other"></p>
   </section>
 
   <section class="panel stack-sm">
-    <div class="btnrow" style="margin:0">
-      <button class="btn primary" id="saveBtn" type="button">Save and return</button>
-    </div>
-    <div class="btnrow" style="margin-top:0">
-      <button class="btn" id="linkBtn" type="button">Copy private prefill link</button>
-    </div>
-    <p class="hint" id="linkMsg">Builds a link with these numbers in it. Bookmark it on your phone so
-      the app opens ready. Keep it to yourself — it contains your limit.</p>
+    <button class="btn primary" id="saveBtn" type="button">Save and return</button>
+    <button class="btn" id="linkBtn" type="button">Copy prefill link</button>
+    <p class="fsub" id="linkMsg">A link that reopens these numbers. Keep it private — it holds your limit.</p>
   </section>
 </main>
 
@@ -502,9 +513,9 @@ h2.sec{
 "use strict";
 
 const DEFAULTS = {
-  name:"Example auction",
-  open:680000, reserve:700000, target:700000, ceiling:710000, step:1000,
-  loan:440000, gov:30, funds:100000, mtg:1, other:7500
+  name:"4 Birch Court",
+  open:670000, reserve:700000, target:700000, ceiling:710000, step:1000,
+  loan:440000, gov:30, funds:135360, mtg:2, other:7311
 };
 const KEY="bidladder.v1";
 
@@ -665,7 +676,14 @@ let bidFocused = false;
 function render(){
   $("barName").textContent = cfg.name || "Auction";
   $("barStop").textContent = money(cfg.ceiling);
-  $("exampleFlag").hidden = !st.example;
+  const ef = $("exampleFlag");
+  ef.hidden = !st.example;
+  if(st.example){
+    ef.textContent = "Loaded ";
+    const b = document.createElement("strong");
+    b.textContent = cfg.name || "this auction";
+    ef.append(b, ". Check these numbers in ⚙ before you bid.");
+  }
 
   if(!bidFocused) $("bid").value = toK(st.bid);
   $("bidEcho").textContent = money(st.bid);
@@ -861,15 +879,22 @@ const F = {name:"fName", open:"fOpen", reserve:"fReserve", target:"fTarget",
 // out of habit shows "$670,000,000" in red instead of silently disabling the
 // hard stop.
 const echoUpdaters = [];
-MONEY_FIELDS.forEach(k=>{
-  const inp = $(F[k]);
-  const out = document.createElement("span");
-  out.className = "echo";
-  inp.parentNode.appendChild(out);
+Object.keys(F).forEach(k=>{
+  const inp = $(F[k]), sub = $("sub-"+k);
+  if(!sub) return;
+  const hint = inp.dataset.hint || "", isMoney = MONEY_FIELDS.has(k);
   const upd = ()=>{
-    const v = parseNum(inp.value) * K;
-    out.textContent = v ? "= " + money(v) : "";
-    out.classList.toggle("bad", v > 50000000);
+    const raw = parseNum(inp.value), v = raw * (isMoney ? K : 1);
+    sub.textContent = "";
+    if(isMoney && raw){
+      const eq = document.createElement("span");
+      eq.className = "eq" + (v > 50000000 ? " bad" : "");
+      eq.textContent = "= " + money(v);
+      sub.append(eq);
+      if(hint) sub.append(" · " + hint);
+    } else if(hint){
+      sub.append(hint);
+    }
   };
   inp.addEventListener("input", upd);
   echoUpdaters.push(upd);
