@@ -78,8 +78,8 @@ body{
 /* ---------- top bar ---------- */
 .limitbar{
   flex:none; background:var(--accent); color:var(--accent-ink);
-  padding:9px 14px; padding-top:calc(9px + env(safe-area-inset-top));
-  display:flex; align-items:center; gap:10px;
+  padding:10px 13px; padding-top:calc(10px + env(safe-area-inset-top));
+  display:flex; align-items:center; gap:8px;
 }
 .lb-name{
   font-weight:600; font-size:12.5px; flex:1; min-width:0;
@@ -94,11 +94,13 @@ body{
   font-variant-numeric:tabular-nums; white-space:nowrap; display:block;
 }
 .iconbtn{
-  appearance:none; border:1px solid currentColor; background:transparent;
-  color:inherit; border-radius:7px; width:30px; height:30px; flex:none;
-  font-size:14px; cursor:pointer; display:grid; place-items:center; opacity:.85;
+  appearance:none; border:0; color:inherit; flex:none;
+  background:color-mix(in srgb, currentColor 16%, transparent);
+  border-radius:10px; width:34px; height:34px;
+  font-size:16px; line-height:1; cursor:pointer;
+  display:grid; place-items:center; font-family:var(--ui);
 }
-.iconbtn:active{opacity:.6}
+.iconbtn:active{background:color-mix(in srgb, currentColor 32%, transparent)}
 
 /* ---------- the one screen ---------- */
 #live{
@@ -284,7 +286,7 @@ body{
       <span class="lb-label">Hard stop</span>
       <span class="lb-stop" id="barStop">$710,000</span>
     </span>
-    <button class="iconbtn" id="undoBtn" type="button" title="Undo last change" aria-label="Undo last change">↶</button>
+    <button class="iconbtn" id="resetBtn" type="button" title="Back to the opening bid" aria-label="Reset the floor to the opening bid">↺</button>
     <button class="iconbtn" id="setupBtn" type="button" title="Setup" aria-label="Open setup">⚙</button>
   </div>
 
@@ -325,7 +327,7 @@ body{
       </div>
     </section>
 
-    <button class="morebtn" id="moreBtn" type="button">Costs, bid log &amp; reset</button>
+    <button class="morebtn" id="moreBtn" type="button">Costs &amp; bid log</button>
   </main>
 
   <!-- ==================== DETAILS ==================== -->
@@ -363,7 +365,6 @@ body{
 
     <section class="stack-sm">
       <button class="btn" id="themeBtn" type="button">Switch light / dark</button>
-      <button class="btn danger" id="reset" type="button">Reset auction</button>
     </section>
 
     <p class="note">
@@ -698,16 +699,13 @@ function buildChips(){
 document.querySelectorAll("[data-rivals]").forEach(b=> b.addEventListener("click", ()=>{ st.rivals=+b.dataset.rivals; render(); }));
 $("tOnMarket").addEventListener("click", ()=>{ st.onMarket=!st.onMarket; render(); });
 
-$("undoBtn").addEventListener("click", ()=>{
-  st.log.pop();
-  const last = st.log[st.log.length-1];
-  st.bid  = last ? last.v : cfg.open;
-  render();
-});
-$("reset").addEventListener("click", ()=>{
+// One reset, always reachable: the floor goes back to the opening bid and the
+// log clears. Stepping down one increment at a time is what the − chip is for.
+function resetAuction(){
   st = {bid:cfg.open, rivals:1, onMarket:false, log:[]};
   showLive(); render();
-});
+}
+$("resetBtn").addEventListener("click", resetAuction);
 $("themeBtn").addEventListener("click", ()=>{
   const cur=document.documentElement.getAttribute("data-theme");
   const dark = cur ? cur==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
