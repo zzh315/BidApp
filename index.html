@@ -163,17 +163,6 @@ body{
 }
 .v-sub{margin:12px 0 0; font-size:13px; line-height:1.35; opacity:.92; text-wrap:pretty; max-width:30ch}
 
-/* rungs */
-.rungs{flex:none; display:flex; align-items:center; gap:8px}
-.rungs .lab{
-  font-size:9.5px; text-transform:uppercase; letter-spacing:.08em;
-  color:var(--ink-3); font-weight:600; flex:none;
-}
-.pips{display:flex; gap:3px; flex:1}
-.pip{height:7px; flex:1; max-width:22px; border-radius:2px; background:var(--line)}
-.pip.on{background:var(--accent)}
-.rungs .n{font-family:var(--mono); font-size:11px; color:var(--ink-2); flex:none}
-
 /* scenarios — one tap, new number */
 .scen{flex:1 1 auto; max-height:200px; display:flex; flex-direction:column; gap:6px}
 .scen > *{flex:1; min-height:44px}
@@ -186,7 +175,7 @@ body{
 }
 .seg button:last-child{border-right:0}
 .seg button[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink); font-weight:600}
-.flags{display:grid; grid-template-columns:repeat(3,1fr); gap:5px}
+.flags{display:grid; grid-template-columns:repeat(2,1fr); gap:6px}
 .flag{
   appearance:none; cursor:pointer; padding:12px 2px; border-radius:8px;
   border:1px solid var(--line-2); background:var(--surface); color:var(--ink-2);
@@ -323,12 +312,6 @@ body{
       <p class="v-sub" id="vSub"></p>
     </section>
 
-    <div class="rungs">
-      <span class="lab">Bids left</span>
-      <div class="pips" id="pips"></div>
-      <span class="n" id="rungN">—</span>
-    </div>
-
     <section class="scen">
       <div class="seg" role="group" aria-label="Bidding pace">
         <button type="button" data-pace="stalled" aria-pressed="false">Stalled</button>
@@ -343,8 +326,7 @@ body{
       </div>
       <div class="flags">
         <button class="flag" type="button" id="tMine" aria-pressed="false">My bid</button>
-        <button class="flag" type="button" id="tOnMarket" aria-pressed="false">On market</button>
-        <button class="flag" type="button" id="tVendor" aria-pressed="false">Vendor bid</button>
+        <button class="flag" type="button" id="tOnMarket" aria-pressed="false">On the market</button>
       </div>
     </section>
 
@@ -375,6 +357,7 @@ body{
           <tr class="sum"><td>Your cash out</td><td id="cCash">—</td></tr>
         </tbody>
       </table>
+      <p class="note" id="rungNote"></p>
       <p class="note" id="dutyNote"></p>
     </section>
 
@@ -491,7 +474,7 @@ const KEY="bidladder.v1";
 
 let cfg = {...DEFAULTS};
 let st = { bid:DEFAULTS.open, mine:false, pace:"steady", rivals:1,
-           onMarket:false, vendor:false, log:[] };
+           onMarket:false, log:[] };
 
 /* ---------------- money ---------------- */
 function generalDuty(v){
@@ -538,12 +521,13 @@ function costsAt(price){
 
 /* ---------------- the engine ---------------- */
 const roundTo=(v,m)=>Math.round(v/m)*m;
+// Pace changes the step in every branch: slower means smaller increments and
+// more rungs held back under your stop.
+const PACE_MULT  = {stalled:1,   steady:2, hot:3};    // below reserve, <=1 rival
+const PACE_SHAKE = {stalled:0.6, steady:1, hot:1.4};  // below reserve, 2+ rivals
+const PACE_RUNGS = {stalled:5,   steady:4, hot:3};    // once it will sell
 const confidentStep = cur => Math.max(5*cfg.step, roundTo(cur*0.007, cfg.step));
 const rungStep = (rem,n) => Math.max(cfg.step, roundTo(rem/n, cfg.step));
-function deRound(bid,cur){
-  const r5=cfg.step*5;
-  return (bid%r5===0 && bid-2*cfg.step>cur) ? bid-2*cfg.step : bid;
-}
 
 function advise(){
   const cur=st.bid, C=cfg.ceiling, T=cfg.target, R=cfg.reserve;
@@ -554,26 +538,22 @@ function advise(){
   if(st.mine) return {tone:"neutral", kicker:"You are highest", main:"SAY NOTHING",
     sub:"Never bid against yourself. Wait for a rival or the pass-in."};
 
-  if(st.vendor && !st.onMarket) return {tone:"hold", kicker:"Vendor bid", main:"HOLD",
-    sub:"The auctioneer's bid, not a rival. Answering it bids against nobody."};
-
   const belowReserve = R>0 && cur<R && !st.onMarket;
   let step, mode, why;
   if(belowReserve && st.rivals<=1){
-    step = st.pace==="stalled" ? cfg.step : cfg.step*2;
+    step = cfg.step * PACE_MULT[st.pace];
     mode="pass-in play"; why="Below reserve it can't sell — bid small, own the pass-in.";
   } else if(belowReserve){
-    step = confidentStep(cur);
+    step = roundTo(confidentStep(cur) * PACE_SHAKE[st.pace], cfg.step);
     mode="shake-out";    why="Two or more rivals below reserve — confident steps thin the field.";
   } else {
-    step = rungStep(C-cur, 4);
+    step = rungStep(C-cur, PACE_RUNGS[st.pace]);
     mode = st.onMarket ? "on the market" : "real contest";
     why="It will sell — keep several rungs under your stop.";
   }
 
   let bid = roundTo(cur+Math.max(step,cfg.step), cfg.step);
   if(bid<=cur) bid = cur+cfg.step;
-  if(mode!=="shake-out") bid = deRound(bid,cur);
   if(bid>C) bid = C;
   if(bid<=cur) return {tone:"stop", kicker:"Your limit", main:"STOP",
     sub:"The next legal step is past your hard stop."};
@@ -596,9 +576,9 @@ function rungsLeft(){
   const below = cfg.reserve>0 && cur<cfg.reserve && !st.onMarket;
   while(cur<C && n<12){
     let s;
-    if(below && st.rivals<=1) s = st.pace==="stalled" ? cfg.step : cfg.step*2;
-    else if(below)            s = confidentStep(cur);
-    else                      s = rungStep(C-cur,4);
+    if(below && st.rivals<=1) s = cfg.step * PACE_MULT[st.pace];
+    else if(below)            s = roundTo(confidentStep(cur)*PACE_SHAKE[st.pace], cfg.step);
+    else                      s = rungStep(C-cur, PACE_RUNGS[st.pace]);
     cur += Math.max(s,cfg.step); n++;
   }
   return n;
@@ -620,22 +600,17 @@ function render(){
     b.setAttribute("aria-pressed", String(+b.dataset.rivals===st.rivals)));
   $("tMine").setAttribute("aria-pressed", String(st.mine));
   $("tOnMarket").setAttribute("aria-pressed", String(st.onMarket));
-  $("tVendor").setAttribute("aria-pressed", String(st.vendor));
-
+  
   const a = advise();
   $("verdict").dataset.tone = a.tone;
   $("vKicker").textContent = a.mode ? a.kicker + " · " + a.mode : a.kicker;
   $("vMain").textContent = a.main;
   $("vSub").textContent = a.sub;
 
-  const n = rungsLeft(), pips = $("pips");
-  pips.innerHTML = "";
-  for(let i=0;i<Math.max(n,1);i++){
-    const d=document.createElement("div");
-    d.className = "pip" + (i<n ? " on":"");
-    pips.appendChild(d);
-  }
-  $("rungN").textContent = n===0 ? "none" : n===12 ? "12+" : String(n);
+  const n = rungsLeft();
+  $("rungNote").textContent = n===0
+    ? "No bids left — the floor is at your hard stop."
+    : `About ${n===12?"12 or more":n} more bid${n===1?"":"s"} between ${money(st.bid)} and ${money(cfg.ceiling)} at the current step size.`;
 
   const price = a.amount || st.bid, m = costsAt(price);
   $("moneyAt").textContent = money(price);
@@ -696,7 +671,7 @@ function load(){
     const num=(k,f)=>{ const v=parseFloat(q.get(k)); return isNaN(v)?f:v; };
     if(q.get("name")) cfg.name = q.get("name");
     for(const k of ["open","reserve","target","ceiling","step","loan","gov","funds","mtg","other"]) cfg[k]=num(k,cfg[k]);
-    st = {bid:cfg.open, mine:false, pace:"steady", rivals:1, onMarket:false, vendor:false, log:[]};
+    st = {bid:cfg.open, mine:false, pace:"steady", rivals:1, onMarket:false, log:[]};
     history.replaceState(null,"",location.pathname);
   }
 }
@@ -732,8 +707,7 @@ $("tMine").addEventListener("click", ()=>{
   if(st.log.length) st.log[st.log.length-1].mine = st.mine;
   render();
 });
-$("tOnMarket").addEventListener("click", ()=>{ st.onMarket=!st.onMarket; if(st.onMarket) st.vendor=false; render(); });
-$("tVendor").addEventListener("click",   ()=>{ st.vendor=!st.vendor; render(); });
+$("tOnMarket").addEventListener("click", ()=>{ st.onMarket=!st.onMarket; render(); });
 
 $("undoBtn").addEventListener("click", ()=>{
   st.log.pop();
@@ -743,7 +717,7 @@ $("undoBtn").addEventListener("click", ()=>{
   render();
 });
 $("reset").addEventListener("click", ()=>{
-  st = {bid:cfg.open, mine:false, pace:"steady", rivals:1, onMarket:false, vendor:false, log:[]};
+  st = {bid:cfg.open, mine:false, pace:"steady", rivals:1, onMarket:false, log:[]};
   showLive(); render();
 });
 $("themeBtn").addEventListener("click", ()=>{
