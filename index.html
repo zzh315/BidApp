@@ -78,16 +78,13 @@ body{
 /* ---------- top bar ---------- */
 .limitbar{
   flex:none; background:var(--accent); color:var(--accent-ink);
-  padding:10px 13px; padding-top:calc(10px + env(safe-area-inset-top));
+  padding:11px 16px; padding-top:calc(13px + env(safe-area-inset-top));
   display:flex; align-items:center; gap:8px;
 }
-.lb-name{
-  font-weight:600; font-size:12.5px; flex:1; min-width:0;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
+.lb-stopwrap{flex:1; min-width:0; display:flex; align-items:baseline; gap:7px}
 .lb-label{
   font-size:9px; text-transform:uppercase; letter-spacing:.09em;
-  opacity:.75; display:block; line-height:1; margin-bottom:1px; text-align:right;
+  opacity:.78; line-height:1; flex:none;
 }
 .lb-stop{
   font-family:var(--display); font-size:16px; font-weight:700;
@@ -114,7 +111,7 @@ body{
 }
 
 /* floor bid */
-.floor{flex:none}
+.floor{flex:1 1 auto; max-height:200px; display:flex; flex-direction:column; justify-content:center}
 .bidrow{display:flex; align-items:center; gap:8px}
 .bidwrap{flex:1; min-width:0; display:flex; align-items:baseline; justify-content:center; gap:4px}
 .bidinput{
@@ -146,7 +143,7 @@ body{
 
 /* the verdict — the whole point of the screen */
 .verdict{
-  flex:1 1 auto; min-height:160px; max-height:300px;
+  flex:1 1 auto; min-height:160px; max-height:330px;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   border-radius:14px; padding:14px 14px; text-align:center;
   background:var(--neutral); color:var(--on-semantic); box-shadow:var(--shadow);
@@ -167,7 +164,7 @@ body{
 .v-rungs{margin:12px 0 0; font-family:var(--mono); font-size:11px; opacity:.72; font-variant-numeric:tabular-nums}
 
 /* scenarios — one tap, new number */
-.scen{flex:1 1 auto; max-height:132px; display:flex; flex-direction:column; gap:6px}
+.scen{flex:1 1 auto; max-height:140px; display:flex; flex-direction:column; gap:6px}
 .scen > *{flex:1; min-height:44px}
 .seg{display:flex; border:1px solid var(--line-2); border-radius:8px; overflow:hidden}
 .seg button{
@@ -186,13 +183,6 @@ body{
 }
 .flag[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:600}
 
-.morebtn{
-  flex:none; appearance:none; cursor:pointer; width:100%;
-  padding:11px; border-radius:8px; border:1px dashed var(--line-2);
-  background:transparent; color:var(--ink-3);
-  font-family:var(--ui); font-size:11.5px; font-weight:500;
-}
-.morebtn:active{background:var(--surface-2)}
 
 /* ---------- secondary views ---------- */
 #details,#setup{
@@ -281,11 +271,11 @@ body{
 <div class="screen" id="screen">
 
   <div class="limitbar">
-    <span class="lb-name" id="barName">4 Birch Court</span>
-    <span>
+    <span class="lb-stopwrap">
       <span class="lb-label">Hard stop</span>
       <span class="lb-stop" id="barStop">$710,000</span>
     </span>
+    <button class="iconbtn" id="moreBtn" type="button" title="Costs and bid log" aria-label="Costs and bid log">≡</button>
     <button class="iconbtn" id="resetBtn" type="button" title="Back to the opening bid" aria-label="Reset the floor to the opening bid">↺</button>
     <button class="iconbtn" id="setupBtn" type="button" title="Setup" aria-label="Open setup">⚙</button>
   </div>
@@ -293,7 +283,25 @@ body{
   <!-- ==================== THE ONE SCREEN ==================== -->
   <main id="live">
 
-    <section class="floor">
+    <section class="verdict" id="verdict" data-tone="neutral" aria-live="polite">
+      <p class="v-kicker" id="vKicker">Your next bid</p>
+      <p class="v-main" id="vMain">—</p>
+      <p class="v-sub" id="vSub"></p>
+      <p class="v-rungs" id="vRungs"></p>
+    </section>
+
+    <section class="scen">
+      <div class="seg" role="group" aria-label="Rival bidders">
+        <button type="button" data-rivals="1" aria-pressed="true">1 rival</button>
+        <button type="button" data-rivals="2" aria-pressed="false">2</button>
+        <button type="button" data-rivals="3" aria-pressed="false">3+</button>
+      </div>
+      <div class="flags">
+        <button class="flag" type="button" id="tOnMarket" aria-pressed="false">On the market</button>
+      </div>
+    </section>
+
+    <section class="floor" id="floorBlock">
       <p class="eyebrow">Highest bid on the floor</p>
       <div class="bidrow">
         <button class="step" id="down" type="button" aria-label="Lower the floor bid">−</button>
@@ -308,26 +316,6 @@ body{
       <div class="chips" id="chips"></div>
     </section>
 
-    <section class="verdict" id="verdict" data-tone="neutral" aria-live="polite">
-      <p class="v-kicker" id="vKicker">Your next bid</p>
-      <p class="v-main" id="vMain">—</p>
-      <p class="v-sub" id="vSub"></p>
-      <p class="v-rungs" id="vRungs"></p>
-    </section>
-
-    <section class="scen">
-      <div class="seg" role="group" aria-label="Rival bidders">
-        <button type="button" data-rivals="0" aria-pressed="false">No rivals</button>
-        <button type="button" data-rivals="1" aria-pressed="true">1</button>
-        <button type="button" data-rivals="2" aria-pressed="false">2</button>
-        <button type="button" data-rivals="3" aria-pressed="false">3+</button>
-      </div>
-      <div class="flags">
-        <button class="flag" type="button" id="tOnMarket" aria-pressed="false">On the market</button>
-      </div>
-    </section>
-
-    <button class="morebtn" id="moreBtn" type="button">Costs &amp; bid log</button>
   </main>
 
   <!-- ==================== DETAILS ==================== -->
@@ -382,10 +370,6 @@ body{
     <section class="panel">
       <p class="phead">The auction</p>
       <div class="frow">
-        <label for="fName">Property</label>
-        <span class="inpwrap wide"><input id="fName" type="text" autocomplete="off"></span>
-      </div>
-      <div class="frow">
         <label for="fOpen">Opening bid</label>
         <span class="inpwrap"><input id="fOpen" inputmode="decimal" autocomplete="off"><span class="sfx">k</span></span>
       </div>
@@ -396,12 +380,6 @@ body{
           data-hint="below this it cannot sell; 0 if unknown"><span class="sfx">k</span></span>
       </div>
       <p class="fsub" id="sub-reserve"></p>
-      <div class="frow">
-        <label for="fTarget">Target</label>
-        <span class="inpwrap"><input id="fTarget" inputmode="decimal" autocomplete="off"
-          data-hint="the number you want to win at"><span class="sfx">k</span></span>
-      </div>
-      <p class="fsub" id="sub-target"></p>
       <div class="frow">
         <label for="fCeiling">Hard stop</label>
         <span class="inpwrap"><input id="fCeiling" inputmode="decimal" autocomplete="off"
@@ -462,8 +440,7 @@ body{
 "use strict";
 
 const DEFAULTS = {
-  name:"4 Birch Court",
-  open:670000, reserve:700000, target:700000, ceiling:710000, step:1000,
+  open:670000, reserve:700000, ceiling:710000, step:1000,
   loan:440000, gov:30, funds:135360, mtg:2, other:7311
 };
 const KEY="bidladder.v1";
@@ -500,7 +477,7 @@ function moneyK(v){
 // Money is TYPED in thousands but STORED in dollars, so the duty thresholds and
 // the $2.34-per-$1,000 registration fee stay correct.
 const K = 1000;
-const MONEY_FIELDS = new Set(["open","reserve","target","ceiling","step","loan","funds","other"]);
+const MONEY_FIELDS = new Set(["open","reserve","ceiling","step","loan","funds","other"]);
 function toK(v){ const s=v/K; return Number.isInteger(s) ? String(s) : String(+s.toFixed(3)); }
 
 function costsAt(price){
@@ -525,7 +502,7 @@ const confidentStep = cur => Math.max(5*cfg.step, roundTo(cur*0.007, cfg.step));
 const rungStep = (rem,n) => Math.max(cfg.step, roundTo(rem/n, cfg.step));
 
 function advise(){
-  const cur=st.bid, C=cfg.ceiling, T=cfg.target, R=cfg.reserve;
+  const cur=st.bid, C=cfg.ceiling, R=cfg.reserve;
 
   if(cur>=C) return {tone:"stop", kicker:"Your limit", main:"STOP",
     sub:"At or past your hard stop. Let it go."};
@@ -553,12 +530,6 @@ function advise(){
   if(cfg.funds>0 && costsAt(bid).left<0) return {tone:"stop", kicker:"Can't fund this", main:"STOP",
     sub:`${money(bid)} is beyond what your funds cover after duty and costs.`};
 
-  if(bid>T && st.rivals===0) return {tone:"hold", kicker:"Past target, nobody bidding", main:"HOLD",
-    sub:`Nothing is pushing you above ${money(T)}. Don't cross it on momentum.`, mode};
-
-  if(bid>T) return {tone:"hold", kicker:"Above target · rival live", main:money(bid),
-    sub:`Past ${money(T)}. Justified only by a live rival.`, mode, amount:bid};
-
   return {tone:"go", kicker:"Your next bid", main:money(bid), sub:why, mode, amount:bid};
 }
 
@@ -585,7 +556,6 @@ const $ = id => document.getElementById(id);
 let bidFocused = false;
 
 function render(){
-  $("barName").textContent = cfg.name || "Auction";
   $("barStop").textContent = money(cfg.ceiling);
   if(!bidFocused) $("bid").value = toK(st.bid);
   $("bidEcho").textContent = money(st.bid);
@@ -665,8 +635,7 @@ function load(){
   const q = new URLSearchParams(location.search);
   if([...q.keys()].length){
     const num=(k,f)=>{ const v=parseFloat(q.get(k)); return isNaN(v)?f:v; };
-    if(q.get("name")) cfg.name = q.get("name");
-    for(const k of ["open","reserve","target","ceiling","step","loan","gov","funds","mtg","other"]) cfg[k]=num(k,cfg[k]);
+    for(const k of ["open","reserve","ceiling","step","loan","gov","funds","mtg","other"]) cfg[k]=num(k,cfg[k]);
     st = {bid:cfg.open, rivals:1, onMarket:false, log:[]};
     history.replaceState(null,"",location.pathname);
   }
@@ -723,9 +692,8 @@ $("moreBtn").addEventListener("click", ()=> show("details"));
 $("backBtn").addEventListener("click", showLive);
 
 /* ---------------- setup ---------------- */
-const F = {name:"fName", open:"fOpen", reserve:"fReserve", target:"fTarget",
-           ceiling:"fCeiling", step:"fStep", loan:"fLoan", gov:"fGov",
-           funds:"fFunds", mtg:"fMtg", other:"fOther"};
+const F = {open:"fOpen", reserve:"fReserve", ceiling:"fCeiling", step:"fStep",
+           loan:"fLoan", gov:"fGov", funds:"fFunds", mtg:"fMtg", other:"fOther"};
 
 const echoUpdaters = [];
 Object.keys(F).forEach(k=>{
@@ -749,10 +717,7 @@ Object.keys(F).forEach(k=>{
 const refreshEchoes = ()=> echoUpdaters.forEach(f=>f());
 
 function readSetup(){
-  for(const k in F){
-    if(k==="name") cfg.name = $(F[k]).value.trim() || "Auction";
-    else cfg[k] = parseNum($(F[k]).value) * (MONEY_FIELDS.has(k)?K:1);
-  }
+  for(const k in F) cfg[k] = parseNum($(F[k]).value) * (MONEY_FIELDS.has(k)?K:1);
 }
 $("setupBtn").addEventListener("click", ()=>{
   if($("setup").hidden){
@@ -764,7 +729,6 @@ function saveSetup(){
   const prevOpen = cfg.open;
   readSetup();
   if(cfg.step < 100) cfg.step = 100;
-  if(cfg.ceiling < cfg.target) cfg.ceiling = cfg.target;
   if(st.bid < cfg.open || cfg.open !== prevOpen){ st.bid = cfg.open; st.log = []; }
   buildChips(); showLive(); render();
 }
