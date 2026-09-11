@@ -165,7 +165,7 @@ body{
 .v-rungs{margin:12px 0 0; font-family:var(--mono); font-size:11px; opacity:.72; font-variant-numeric:tabular-nums}
 
 /* scenarios — one tap, new number */
-.scen{flex:1 1 auto; max-height:200px; display:flex; flex-direction:column; gap:6px}
+.scen{flex:1 1 auto; max-height:132px; display:flex; flex-direction:column; gap:6px}
 .scen > *{flex:1; min-height:44px}
 .seg{display:flex; border:1px solid var(--line-2); border-radius:8px; overflow:hidden}
 .seg button{
@@ -314,11 +314,6 @@ body{
     </section>
 
     <section class="scen">
-      <div class="seg" role="group" aria-label="Bidding pace">
-        <button type="button" data-pace="stalled" aria-pressed="false">Stalled</button>
-        <button type="button" data-pace="steady" aria-pressed="true">Steady</button>
-        <button type="button" data-pace="hot" aria-pressed="false">Hot</button>
-      </div>
       <div class="seg" role="group" aria-label="Rival bidders">
         <button type="button" data-rivals="0" aria-pressed="false">No rivals</button>
         <button type="button" data-rivals="1" aria-pressed="true">1</button>
@@ -473,7 +468,7 @@ const DEFAULTS = {
 const KEY="bidladder.v1";
 
 let cfg = {...DEFAULTS};
-let st = { bid:DEFAULTS.open, pace:"steady", rivals:1, onMarket:false, log:[] };
+let st = { bid:DEFAULTS.open, rivals:1, onMarket:false, log:[] };
 
 /* ---------------- money ---------------- */
 function generalDuty(v){
@@ -520,11 +515,11 @@ function costsAt(price){
 
 /* ---------------- the engine ---------------- */
 const roundTo=(v,m)=>Math.round(v/m)*m;
-// Pace changes the step in every branch: slower means smaller increments and
-// more rungs held back under your stop.
-const PACE_MULT  = {stalled:1,   steady:2, hot:3};    // below reserve, <=1 rival
-const PACE_SHAKE = {stalled:0.6, steady:1, hot:1.4};  // below reserve, 2+ rivals
-const PACE_RUNGS = {stalled:5,   steady:4, hot:3};    // once it will sell
+// Rival count is the only room-reading the app asks for, because it is
+// countable rather than judged, and a crowded room is a fast room. It picks the
+// strategy and sizes the step.
+const crowdShake = r => r>=3 ? 1.3 : 1;   // 2+ rivals below reserve
+const crowdRungs = r => r>=3 ? 3 : 4;     // rungs held under the stop once it sells
 const confidentStep = cur => Math.max(5*cfg.step, roundTo(cur*0.007, cfg.step));
 const rungStep = (rem,n) => Math.max(cfg.step, roundTo(rem/n, cfg.step));
 
@@ -537,13 +532,13 @@ function advise(){
   const belowReserve = R>0 && cur<R && !st.onMarket;
   let step, mode, why;
   if(belowReserve && st.rivals<=1){
-    step = cfg.step * PACE_MULT[st.pace];
-    mode="pass-in play"; why="Below reserve it can't sell — bid small, own the pass-in.";
+    step = cfg.step;
+    mode="pass-in play"; why="Below reserve it can't sell — smallest step, own the pass-in.";
   } else if(belowReserve){
-    step = roundTo(confidentStep(cur) * PACE_SHAKE[st.pace], cfg.step);
+    step = roundTo(confidentStep(cur) * crowdShake(st.rivals), cfg.step);
     mode="shake-out";    why="Two or more rivals below reserve — confident steps thin the field.";
   } else {
-    step = rungStep(C-cur, PACE_RUNGS[st.pace]);
+    step = rungStep(C-cur, crowdRungs(st.rivals));
     mode = st.onMarket ? "on the market" : "real contest";
     why="It will sell — keep several rungs under your stop.";
   }
@@ -576,9 +571,9 @@ function rungsLeft(){
   while(cur<C && n<12){
     const below = cfg.reserve>0 && cur<cfg.reserve && !st.onMarket;
     let s;
-    if(below && st.rivals<=1) s = cfg.step * PACE_MULT[st.pace];
-    else if(below)            s = roundTo(confidentStep(cur)*PACE_SHAKE[st.pace], cfg.step);
-    else                      s = rungStep(C-cur, PACE_RUNGS[st.pace]);
+    if(below && st.rivals<=1) s = cfg.step;
+    else if(below)            s = roundTo(confidentStep(cur)*crowdShake(st.rivals), cfg.step);
+    else                      s = rungStep(C-cur, crowdRungs(st.rivals));
     cur += Math.max(s,cfg.step) * answering; n++;
   }
   return n;
@@ -594,8 +589,6 @@ function render(){
   if(!bidFocused) $("bid").value = toK(st.bid);
   $("bidEcho").textContent = money(st.bid);
 
-  document.querySelectorAll("[data-pace]").forEach(b=>
-    b.setAttribute("aria-pressed", String(b.dataset.pace===st.pace)));
   document.querySelectorAll("[data-rivals]").forEach(b=>
     b.setAttribute("aria-pressed", String(+b.dataset.rivals===st.rivals)));
   $("tOnMarket").setAttribute("aria-pressed", String(st.onMarket));
@@ -673,7 +666,7 @@ function load(){
     const num=(k,f)=>{ const v=parseFloat(q.get(k)); return isNaN(v)?f:v; };
     if(q.get("name")) cfg.name = q.get("name");
     for(const k of ["open","reserve","target","ceiling","step","loan","gov","funds","mtg","other"]) cfg[k]=num(k,cfg[k]);
-    st = {bid:cfg.open, pace:"steady", rivals:1, onMarket:false, log:[]};
+    st = {bid:cfg.open, rivals:1, onMarket:false, log:[]};
     history.replaceState(null,"",location.pathname);
   }
 }
@@ -702,7 +695,6 @@ function buildChips(){
   c.appendChild(minus);
 }
 
-document.querySelectorAll("[data-pace]").forEach(b=> b.addEventListener("click", ()=>{ st.pace=b.dataset.pace; render(); }));
 document.querySelectorAll("[data-rivals]").forEach(b=> b.addEventListener("click", ()=>{ st.rivals=+b.dataset.rivals; render(); }));
 $("tOnMarket").addEventListener("click", ()=>{ st.onMarket=!st.onMarket; render(); });
 
@@ -713,7 +705,7 @@ $("undoBtn").addEventListener("click", ()=>{
   render();
 });
 $("reset").addEventListener("click", ()=>{
-  st = {bid:cfg.open, pace:"steady", rivals:1, onMarket:false, log:[]};
+  st = {bid:cfg.open, rivals:1, onMarket:false, log:[]};
   showLive(); render();
 });
 $("themeBtn").addEventListener("click", ()=>{
