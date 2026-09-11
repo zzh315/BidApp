@@ -305,13 +305,13 @@ body{
     <section class="floor" id="floorBlock">
       <p class="eyebrow">Highest bid on the floor</p>
       <div class="bidrow">
-        <button class="step" id="down" type="button" aria-label="Lower the floor bid">−</button>
+        <button class="step" id="down" type="button" aria-label="Lower the floor bid by $1,000" title="−$1,000">−</button>
         <span class="bidwrap">
           <input class="bidinput" id="bid" inputmode="decimal" autocomplete="off"
                  aria-label="Highest bid on the floor, in thousands">
           <span class="unit" aria-hidden="true">$k</span>
         </span>
-        <button class="step" id="up" type="button" aria-label="Raise the floor bid">+</button>
+        <button class="step" id="up" type="button" aria-label="Raise the floor bid by $1,000" title="+$1,000">+</button>
       </div>
       <p class="bid-echo" id="bidEcho">$670,000</p>
       <p class="eyebrow inc-lab">Auctioneer's increment</p>
@@ -479,6 +479,11 @@ function moneyK(v){
 // Money is TYPED in thousands but STORED in dollars, so the duty thresholds and
 // the $2.34-per-$1,000 registration fee stay correct.
 const K = 1000;
+// The +/- steppers nudge the floor in whole thousands, independent of the
+// auctioneer's increment. The increment is a MINIMUM raise, not a grid: a rival
+// is free to bid $6,000 over when the auctioneer is calling $5,000, and you
+// still have to record it.
+const NUDGE = 1000;
 const MONEY_FIELDS = new Set(["open","reserve","ceiling","step","loan","funds","other"]);
 function toK(v){ const s=v/K; return Number.isInteger(s) ? String(s) : String(+s.toFixed(3)); }
 
@@ -527,11 +532,11 @@ function advise(){
     why="It will sell — keep several rungs under your stop.";
   }
 
-  let bid = roundTo(cur+Math.max(step,cfg.step), cfg.step);
-  if(bid<=cur) bid = cur+cfg.step;
-  if(bid>C) bid = C;
-  if(bid<=cur) return {tone:"stop", kicker:"Your limit", main:"STOP",
-    sub:"The next legal step is past your hard stop."};
+  let bid = roundTo(cur + Math.max(step, cfg.step), NUDGE);
+  if(bid < cur + cfg.step) bid = cur + cfg.step;   // never under the called minimum
+  if(bid > C) bid = C;
+  if(bid < cur + cfg.step) return {tone:"stop", kicker:"Your limit", main:"STOP",
+    sub:`A ${money(cfg.step)} raise would take you past ${money(C)}.`};
 
   if(cfg.funds>0 && costsAt(bid).left<0) return {tone:"stop", kicker:"Can't fund this", main:"STOP",
     sub:`${money(bid)} is beyond what your funds cover after duty and costs.`};
@@ -655,8 +660,8 @@ const parseNum = s => { const v=parseFloat(String(s).replace(/[^0-9.]/g,"")); re
 $("bid").addEventListener("focus", e=>{ bidFocused=true; e.target.select(); });
 $("bid").addEventListener("blur",  e=>{ bidFocused=false; setBid(parseNum(e.target.value)*K); render(); });
 $("bid").addEventListener("keydown", e=>{ if(e.key==="Enter") e.target.blur(); });
-$("up").addEventListener("click",   ()=> setBid(st.bid + cfg.step));
-$("down").addEventListener("click", ()=> setBid(Math.max(0, st.bid - cfg.step)));
+$("up").addEventListener("click",   ()=> setBid(st.bid + NUDGE));
+$("down").addEventListener("click", ()=> setBid(Math.max(0, st.bid - NUDGE)));
 
 document.querySelectorAll("[data-rivals]").forEach(b=> b.addEventListener("click", ()=>{ st.rivals=+b.dataset.rivals; render(); }));
 document.querySelectorAll("[data-step]").forEach(b=> b.addEventListener("click", ()=>{ cfg.step=+b.dataset.step; render(); }));
