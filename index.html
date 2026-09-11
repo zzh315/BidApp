@@ -500,6 +500,10 @@ const crowdShake = r => r>=3 ? 1.3 : 1;   // 2+ rivals below reserve
 const crowdRungs = r => r>=3 ? 3 : 4;     // rungs held under the stop once it sells
 const confidentStep = cur => Math.max(5*cfg.step, roundTo(cur*0.007, cfg.step));
 const rungStep = (rem,n) => Math.max(cfg.step, roundTo(rem/n, cfg.step));
+// Once it will sell: take a normal auction increment, but never a step so big
+// that fewer than n bids fit under the stop. Dividing the whole remaining range
+// by n on its own leaps hardest when you are furthest from your limit.
+const contestStep = (cur,rem,n) => Math.max(cfg.step, Math.min(confidentStep(cur), rungStep(rem,n)));
 
 function advise(){
   const cur=st.bid, C=cfg.ceiling, R=cfg.reserve;
@@ -516,7 +520,7 @@ function advise(){
     step = roundTo(confidentStep(cur) * crowdShake(st.rivals), cfg.step);
     mode="shake-out";    why="Two or more rivals below reserve — confident steps thin the field.";
   } else {
-    step = rungStep(C-cur, crowdRungs(st.rivals));
+    step = contestStep(cur, C-cur, crowdRungs(st.rivals));
     mode = st.onMarket ? "on the market" : "real contest";
     why="It will sell — keep several rungs under your stop.";
   }
@@ -545,7 +549,7 @@ function rungsLeft(){
     let s;
     if(below && st.rivals<=1) s = cfg.step;
     else if(below)            s = roundTo(confidentStep(cur)*crowdShake(st.rivals), cfg.step);
-    else                      s = rungStep(C-cur, crowdRungs(st.rivals));
+    else                      s = contestStep(cur, C-cur, crowdRungs(st.rivals));
     cur += Math.max(s,cfg.step) * answering; n++;
   }
   return n;
