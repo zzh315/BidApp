@@ -76,7 +76,7 @@ Keep that link to yourself. It contains your limit, which is the one number you 
 Supported parameters: `name`, `open`, `reserve`, `target`, `ceiling`, `step`, `loan`, `gov`, `funds`,
 `mtg`, `other`.
 
-Unlike the form, **URL parameters are in whole dollars** (`ceiling=710000`, not `710`). The Copy button
+Unlike the form, **URL parameters are in whole dollars** (`ceiling=700000`, not `700`). The Copy button
 writes them for you, so this only matters if you hand-edit a link.
 
 ---
