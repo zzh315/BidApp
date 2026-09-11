@@ -55,7 +55,7 @@
 }
 
 *{box-sizing:border-box}
-/* Rapid taps on the steppers and chips must register as taps, not as a
+/* Rapid taps on the steppers and increment buttons must register as taps, not as a
    double-tap zoom. manipulation kills the double-tap gesture while leaving
    scrolling and deliberate pinch-zoom intact. */
 html{touch-action:manipulation}
@@ -130,6 +130,7 @@ body{
 }
 .bidinput:focus{outline:2px solid var(--focus); outline-offset:3px; border-radius:6px}
 .unit{font-family:var(--mono); font-size:13px; color:var(--ink-3); flex:none}
+.inc-lab{margin:11px 0 5px}
 .bid-echo{
   margin:1px 0 0; text-align:center; font-family:var(--mono);
   font-size:11.5px; color:var(--ink-3); font-variant-numeric:tabular-nums;
@@ -140,14 +141,6 @@ body{
   border-radius:50%; font-size:21px; font-family:var(--display); line-height:1;
 }
 .step:active{background:var(--line)}
-.chips{display:grid; grid-template-columns:repeat(5,1fr); gap:5px; margin-top:8px}
-.chip{
-  appearance:none; cursor:pointer; font-family:var(--mono); font-size:11.5px;
-  padding:10px 2px; border-radius:6px; border:1px solid var(--line-2);
-  background:var(--surface); color:var(--ink-2); min-width:0;
-}
-.chip:active{background:var(--surface-2)}
-.chip.minus{color:var(--ink-3)}
 
 /* the verdict — the whole point of the screen */
 .verdict{
@@ -321,7 +314,13 @@ body{
         <button class="step" id="up" type="button" aria-label="Raise the floor bid">+</button>
       </div>
       <p class="bid-echo" id="bidEcho">$670,000</p>
-      <div class="chips" id="chips"></div>
+      <p class="eyebrow inc-lab">Auctioneer's increment</p>
+      <div class="seg" role="group" aria-label="Auctioneer's smallest increment">
+        <button type="button" data-step="1000" aria-pressed="true">$1k</button>
+        <button type="button" data-step="2000" aria-pressed="false">$2k</button>
+        <button type="button" data-step="5000" aria-pressed="false">$5k</button>
+        <button type="button" data-step="10000" aria-pressed="false">$10k</button>
+      </div>
     </section>
 
   </main>
@@ -394,11 +393,6 @@ body{
           data-hint="never suggested past this"><span class="sfx">k</span></span>
       </div>
       <p class="fsub" id="sub-ceiling"></p>
-      <div class="frow">
-        <label for="fStep">Smallest increment</label>
-        <span class="inpwrap"><input id="fStep" inputmode="decimal" autocomplete="off"><span class="sfx">k</span></span>
-      </div>
-      <p class="fsub" id="sub-step"></p>
     </section>
 
     <section class="panel">
@@ -506,7 +500,7 @@ const roundTo=(v,m)=>Math.round(v/m)*m;
 // strategy and sizes the step.
 const crowdShake = r => r>=3 ? 1.3 : 1;   // 2+ rivals below reserve
 const crowdRungs = r => r>=3 ? 3 : 4;     // rungs held under the stop once it sells
-const confidentStep = cur => Math.max(5*cfg.step, roundTo(cur*0.007, cfg.step));
+const confidentStep = cur => Math.max(cfg.step, roundTo(cur*0.007, cfg.step));
 const rungStep = (rem,n) => Math.max(cfg.step, roundTo(rem/n, cfg.step));
 // Once it will sell: take a normal auction increment, but never a step so big
 // that fewer than n bids fit under the stop. Dividing the whole remaining range
@@ -574,6 +568,8 @@ function render(){
 
   document.querySelectorAll("[data-rivals]").forEach(b=>
     b.setAttribute("aria-pressed", String(+b.dataset.rivals===st.rivals)));
+  document.querySelectorAll("[data-step]").forEach(b=>
+    b.setAttribute("aria-pressed", String(+b.dataset.step===cfg.step)));
   $("tOnMarket").setAttribute("aria-pressed", String(st.onMarket));
   
   const a = advise();
@@ -662,22 +658,8 @@ $("bid").addEventListener("keydown", e=>{ if(e.key==="Enter") e.target.blur(); }
 $("up").addEventListener("click",   ()=> setBid(st.bid + cfg.step));
 $("down").addEventListener("click", ()=> setBid(Math.max(0, st.bid - cfg.step)));
 
-function buildChips(){
-  const c=$("chips"); c.innerHTML="";
-  [1,2,5,10].forEach(mult=>{
-    const amt=cfg.step*mult, b=document.createElement("button");
-    b.type="button"; b.className="chip"; b.textContent="+"+moneyK(amt);
-    b.addEventListener("click", ()=> setBid(st.bid+amt));
-    c.appendChild(b);
-  });
-  const minus=document.createElement("button");
-  minus.type="button"; minus.className="chip minus";
-  minus.textContent="−"+moneyK(cfg.step); minus.title="Correct a mis-tap";
-  minus.addEventListener("click", ()=> setBid(Math.max(0, st.bid-cfg.step)));
-  c.appendChild(minus);
-}
-
 document.querySelectorAll("[data-rivals]").forEach(b=> b.addEventListener("click", ()=>{ st.rivals=+b.dataset.rivals; render(); }));
+document.querySelectorAll("[data-step]").forEach(b=> b.addEventListener("click", ()=>{ cfg.step=+b.dataset.step; render(); }));
 $("tOnMarket").addEventListener("click", ()=>{ st.onMarket=!st.onMarket; render(); });
 
 // One reset, always reachable: the floor goes back to the opening bid and the
@@ -704,7 +686,7 @@ $("moreBtn").addEventListener("click", ()=> show("details"));
 $("backBtn").addEventListener("click", showLive);
 
 /* ---------------- setup ---------------- */
-const F = {open:"fOpen", reserve:"fReserve", ceiling:"fCeiling", step:"fStep",
+const F = {open:"fOpen", reserve:"fReserve", ceiling:"fCeiling",
            loan:"fLoan", gov:"fGov", funds:"fFunds", mtg:"fMtg", other:"fOther"};
 
 const echoUpdaters = [];
@@ -742,7 +724,7 @@ function saveSetup(){
   readSetup();
   if(cfg.step < 100) cfg.step = 100;
   if(st.bid < cfg.open || cfg.open !== prevOpen){ st.bid = cfg.open; st.log = []; }
-  buildChips(); showLive(); render();
+  showLive(); render();
 }
 $("saveBtn").addEventListener("click", saveSetup);
 
@@ -761,7 +743,6 @@ $("linkBtn").addEventListener("click", ()=>{
 /* ---------------- boot ---------------- */
 try{ const t=localStorage.getItem("bidladder.theme"); if(t) document.documentElement.setAttribute("data-theme",t); }catch(e){}
 load();
-buildChips();
 render();
 </script>
 </body>
