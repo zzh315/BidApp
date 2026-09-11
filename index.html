@@ -162,6 +162,7 @@ body{
   font-variant-numeric:tabular-nums; text-wrap:balance;
 }
 .v-sub{margin:12px 0 0; font-size:13px; line-height:1.35; opacity:.92; text-wrap:pretty; max-width:30ch}
+.v-rungs{margin:12px 0 0; font-family:var(--mono); font-size:11px; opacity:.72; font-variant-numeric:tabular-nums}
 
 /* scenarios — one tap, new number */
 .scen{flex:1 1 auto; max-height:200px; display:flex; flex-direction:column; gap:6px}
@@ -309,6 +310,7 @@ body{
       <p class="v-kicker" id="vKicker">Your next bid</p>
       <p class="v-main" id="vMain">—</p>
       <p class="v-sub" id="vSub"></p>
+      <p class="v-rungs" id="vRungs"></p>
     </section>
 
     <section class="scen">
@@ -564,16 +566,20 @@ function advise(){
   return {tone:"go", kicker:"Your next bid", main:money(bid), sub:why, mode, amount:bid};
 }
 
+// How many more bids YOU get before the hard stop, assuming every bid you make
+// draws one answering bid from each active rival at the same increment. That
+// assumption is the whole estimate: rivals decide the real number, not you.
 function rungsLeft(){
   const C=cfg.ceiling; let cur=st.bid, n=0;
   if(cur>=C) return 0;
-  const below = cfg.reserve>0 && cur<cfg.reserve && !st.onMarket;
+  const answering = 1 + st.rivals;
   while(cur<C && n<12){
+    const below = cfg.reserve>0 && cur<cfg.reserve && !st.onMarket;
     let s;
     if(below && st.rivals<=1) s = cfg.step * PACE_MULT[st.pace];
     else if(below)            s = roundTo(confidentStep(cur)*PACE_SHAKE[st.pace], cfg.step);
     else                      s = rungStep(C-cur, PACE_RUNGS[st.pace]);
-    cur += Math.max(s,cfg.step); n++;
+    cur += Math.max(s,cfg.step) * answering; n++;
   }
   return n;
 }
@@ -601,9 +607,10 @@ function render(){
   $("vSub").textContent = a.sub;
 
   const n = rungsLeft();
+  $("vRungs").textContent = n===0 ? "" : `≈ ${n===12?"12+":n} more bid${n===1?"":"s"} to ${money(cfg.ceiling)}`;
   $("rungNote").textContent = n===0
     ? "No bids left — the floor is at your hard stop."
-    : `About ${n===12?"12 or more":n} more bid${n===1?"":"s"} between ${money(st.bid)} and ${money(cfg.ceiling)} at the current step size.`;
+    : `Roughly ${n===12?"12 or more":n} more bid${n===1?"":"s"} for you between ${money(st.bid)} and ${money(cfg.ceiling)} — assuming each bid you make draws one answer from each of your ${st.rivals} rival${st.rivals===1?"":"s"} at the same increment. Rivals set the real number.`;
 
   const price = a.amount || st.bid, m = costsAt(price);
   $("moneyAt").textContent = money(price);
