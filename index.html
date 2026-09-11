@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#1E4E5A">
-<meta name="description" content="Auction bidding assistant: what to bid, how many bids you have left, and what that bid really costs after stamp duty and fees.">
+<meta name="description" content="Auction bidding assistant: what to bid next, how many bids you have left, and what it really costs.">
 <title>Bid Ladder</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -59,206 +59,181 @@ body{
   margin:0; background:var(--stage); color:var(--ink);
   font-family:var(--ui); font-size:15px; line-height:1.45;
   -webkit-text-size-adjust:100%;
-  min-height:100dvh; display:grid; place-items:center;
-  padding:24px 16px;
+  min-height:100dvh; display:grid; place-items:center; padding:24px 16px;
 }
 
 /* ---------- iPhone 17 shell ---------- */
 .device{
-  flex:none; background:var(--bezel); padding:11px;
-  border-radius:58px; box-shadow:
-    0 0 0 1px var(--bezel-edge) inset,
-    0 2px 6px rgba(0,0,0,.28),
-    0 26px 60px -12px rgba(0,0,0,.45);
+  flex:none; background:var(--bezel); padding:11px; border-radius:58px;
+  box-shadow:0 0 0 1px var(--bezel-edge) inset, 0 2px 6px rgba(0,0,0,.28),
+             0 26px 60px -12px rgba(0,0,0,.45);
 }
 .screen{
-  width:var(--vp-w);
-  height:min(var(--vp-h), calc(100dvh - 70px));
-  border-radius:47px; overflow:hidden auto; position:relative;
+  width:var(--vp-w); height:min(var(--vp-h), calc(100dvh - 70px));
+  border-radius:47px; background:var(--ground);
   container-type:inline-size;
-  background:var(--ground); overscroll-behavior:contain;
-  -webkit-overflow-scrolling:touch;
-  scrollbar-width:none;
+  display:flex; flex-direction:column; overflow:hidden; position:relative;
 }
-.screen::-webkit-scrollbar{width:0; height:0}
-.wrap{margin:0 auto; padding-inline:16px; padding-block:0 40px}
 
-/* ---------- fixed limit bar ---------- */
+/* ---------- top bar ---------- */
 .limitbar{
-  position:sticky; top:0; z-index:20;
-  background:var(--accent); color:var(--accent-ink);
-  padding:10px 16px;
+  flex:none; background:var(--accent); color:var(--accent-ink);
+  padding:9px 14px; padding-top:calc(9px + env(safe-area-inset-top));
+  display:flex; align-items:center; gap:10px;
 }
-.lb-inner{
-  display:flex; align-items:center; gap:12px;
+.lb-name{
+  font-weight:600; font-size:12.5px; flex:1; min-width:0;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
-.limitbar .lb-name{
-  font-weight:600; font-size:13px; letter-spacing:.02em;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; min-width:0;
+.lb-label{
+  font-size:9px; text-transform:uppercase; letter-spacing:.09em;
+  opacity:.75; display:block; line-height:1; margin-bottom:1px; text-align:right;
 }
-.limitbar .lb-stop{
-  font-family:var(--display); font-size:17px; font-weight:700;
-  font-variant-numeric:tabular-nums; white-space:nowrap;
-}
-.limitbar .lb-label{
-  font-size:10px; text-transform:uppercase; letter-spacing:.09em;
-  opacity:.75; display:block; line-height:1; margin-bottom:2px; text-align:right;
+.lb-stop{
+  font-family:var(--display); font-size:16px; font-weight:700;
+  font-variant-numeric:tabular-nums; white-space:nowrap; display:block;
 }
 .iconbtn{
   appearance:none; border:1px solid currentColor; background:transparent;
-  color:inherit; border-radius:6px; width:32px; height:32px; flex:none;
+  color:inherit; border-radius:7px; width:30px; height:30px; flex:none;
   font-size:14px; cursor:pointer; display:grid; place-items:center; opacity:.85;
 }
-.iconbtn:hover{opacity:1}
+.iconbtn:active{opacity:.6}
 
-/* ---------- generic blocks ---------- */
+/* ---------- the one screen ---------- */
+#live{
+  flex:1; min-height:0; overflow-y:auto;
+  display:flex; flex-direction:column; gap:9px;
+  padding:11px 13px calc(11px + env(safe-area-inset-bottom));
+}
 .eyebrow{
-  font-size:10px; text-transform:uppercase; letter-spacing:.1em;
-  color:var(--ink-3); font-weight:600; margin:0 0 6px;
+  font-size:9.5px; text-transform:uppercase; letter-spacing:.1em;
+  color:var(--ink-3); font-weight:600; margin:0 0 4px;
 }
-.panel{
-  background:var(--surface); border:1px solid var(--line);
-  border-radius:10px; padding:14px;
-}
-.stack{display:flex; flex-direction:column; gap:14px}
-.stack-sm{display:flex; flex-direction:column; gap:8px}
 
-/* ---------- current bid ---------- */
-.bidbox{padding:14px 14px 12px}
-.bidrow{display:flex; align-items:center; gap:10px}
-.bidwrap{
-  flex:1; min-width:0; display:flex; align-items:baseline;
-  justify-content:center; gap:5px;
-}
-.unit{
-  font-family:var(--mono); font-size:14px; font-weight:500;
-  color:var(--ink-3); flex:none;
-}
-.bid-echo{
-  margin:2px 0 0; text-align:center; font-family:var(--mono);
-  font-size:12.5px; color:var(--ink-3); font-variant-numeric:tabular-nums;
-}
+/* floor bid */
+.floor{flex:none}
+.bidrow{display:flex; align-items:center; gap:8px}
+.bidwrap{flex:1; min-width:0; display:flex; align-items:baseline; justify-content:center; gap:4px}
 .bidinput{
-  flex:0 1 auto; min-width:0; width:100%;
-  font-family:var(--display); font-weight:700; font-size:clamp(34px,10cqw,46px);
+  flex:0 1 auto; min-width:0; width:100%; text-align:center;
+  font-family:var(--display); font-weight:700; font-size:clamp(32px,11cqw,48px);
   font-variant-numeric:tabular-nums; letter-spacing:-.02em;
   background:transparent; border:0; color:var(--ink); padding:0;
-  text-align:center;
 }
-.bidinput:focus{outline:2px solid var(--focus); outline-offset:4px; border-radius:6px}
+.bidinput:focus{outline:2px solid var(--focus); outline-offset:3px; border-radius:6px}
+.unit{font-family:var(--mono); font-size:13px; color:var(--ink-3); flex:none}
+.bid-echo{
+  margin:1px 0 0; text-align:center; font-family:var(--mono);
+  font-size:11.5px; color:var(--ink-3); font-variant-numeric:tabular-nums;
+}
 .step{
-  appearance:none; width:46px; height:46px; flex:none; cursor:pointer;
+  appearance:none; width:44px; height:44px; flex:none; cursor:pointer;
   border:1px solid var(--line-2); background:var(--surface-2); color:var(--ink);
-  border-radius:50%; font-size:22px; font-family:var(--display); line-height:1;
+  border-radius:50%; font-size:21px; font-family:var(--display); line-height:1;
 }
 .step:active{background:var(--line)}
-.chips{display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:10px}
+.chips{display:grid; grid-template-columns:repeat(5,1fr); gap:5px; margin-top:8px}
 .chip{
-  appearance:none; cursor:pointer; font-family:var(--mono); font-size:12.5px;
-  padding:8px 6px; border-radius:6px; border:1px solid var(--line-2);
+  appearance:none; cursor:pointer; font-family:var(--mono); font-size:11.5px;
+  padding:8px 2px; border-radius:6px; border:1px solid var(--line-2);
   background:var(--surface); color:var(--ink-2); min-width:0;
 }
 .chip:active{background:var(--surface-2)}
 .chip.minus{color:var(--ink-3)}
 
-/* ---------- segmented ---------- */
-.seg{display:flex; gap:0; border:1px solid var(--line-2); border-radius:8px; overflow:hidden}
-.seg button{
-  appearance:none; cursor:pointer; flex:1; padding:10px 4px; border:0;
-  background:var(--surface); color:var(--ink-2);
-  font-family:var(--ui); font-size:13px; font-weight:500;
-  border-right:1px solid var(--line-2);
-}
-.seg button:last-child{border-right:0}
-.seg button[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink); font-weight:600}
-.seg.who button[aria-pressed="true"]{font-size:14px}
-
-/* ---------- verdict ---------- */
+/* the verdict — the whole point of the screen */
 .verdict{
-  border-radius:12px; padding:20px 16px; text-align:center;
+  flex:1; min-height:140px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  border-radius:14px; padding:14px 14px; text-align:center;
   background:var(--neutral); color:var(--on-semantic); box-shadow:var(--shadow);
 }
 .verdict[data-tone="go"]{background:var(--go)}
 .verdict[data-tone="hold"]{background:var(--hold)}
 .verdict[data-tone="stop"]{background:var(--stop)}
-.verdict[data-tone="ontop"]{background:var(--neutral)}
 .v-kicker{
-  font-size:11px; text-transform:uppercase; letter-spacing:.14em;
-  font-weight:600; opacity:.8; margin:0 0 8px;
+  font-size:10.5px; text-transform:uppercase; letter-spacing:.13em;
+  font-weight:600; opacity:.82; margin:0 0 10px;
 }
 .v-main{
-  font-family:var(--display); font-weight:700; letter-spacing:-.02em;
-  font-size:clamp(32px,9.5cqw,44px); line-height:1.02; margin:0;
+  font-family:var(--display); font-weight:700; letter-spacing:-.03em;
+  font-size:clamp(36px,15.5cqw,62px); line-height:.98; margin:0;
   font-variant-numeric:tabular-nums; text-wrap:balance;
 }
-.v-sub{margin:10px 0 0; font-size:13.5px; line-height:1.4; opacity:.92; text-wrap:pretty}
-.v-mode{
-  display:inline-block; margin-top:12px; font-family:var(--mono); font-size:10.5px;
-  text-transform:uppercase; letter-spacing:.08em;
-  border:1px solid currentColor; border-radius:999px; padding:3px 9px; opacity:.75;
-}
+.v-sub{margin:12px 0 0; font-size:13px; line-height:1.35; opacity:.92; text-wrap:pretty; max-width:30ch}
 
-/* ---------- rungs ---------- */
-.rungs{display:flex; align-items:center; gap:10px}
-.pips{display:flex; gap:4px; flex:1}
-.pip{height:9px; flex:1; max-width:26px; border-radius:2px; background:var(--line)}
+/* rungs */
+.rungs{flex:none; display:flex; align-items:center; gap:8px}
+.rungs .lab{
+  font-size:9.5px; text-transform:uppercase; letter-spacing:.08em;
+  color:var(--ink-3); font-weight:600; flex:none;
+}
+.pips{display:flex; gap:3px; flex:1}
+.pip{height:7px; flex:1; max-width:22px; border-radius:2px; background:var(--line)}
 .pip.on{background:var(--accent)}
-.rungs .n{font-family:var(--mono); font-size:12px; color:var(--ink-2); white-space:nowrap}
+.rungs .n{font-family:var(--mono); font-size:11px; color:var(--ink-2); flex:none}
 
-/* ---------- money ---------- */
-.tiles{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
-.tile{
-  background:var(--surface); border:1px solid var(--line);
-  border-radius:8px; padding:10px 8px; text-align:center;
+/* scenarios — one tap, new number */
+.scen{flex:none; display:flex; flex-direction:column; gap:5px}
+.seg{display:flex; border:1px solid var(--line-2); border-radius:8px; overflow:hidden}
+.seg button{
+  appearance:none; cursor:pointer; flex:1; padding:9px 2px; border:0;
+  background:var(--surface); color:var(--ink-2);
+  font-family:var(--ui); font-size:12.5px; font-weight:500;
+  border-right:1px solid var(--line-2); min-width:0;
 }
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink); font-weight:600}
+.flags{display:grid; grid-template-columns:repeat(3,1fr); gap:5px}
+.flag{
+  appearance:none; cursor:pointer; padding:9px 2px; border-radius:8px;
+  border:1px solid var(--line-2); background:var(--surface); color:var(--ink-2);
+  font-family:var(--ui); font-size:12.5px; font-weight:500; min-width:0;
+}
+.flag[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:600}
+
+.morebtn{
+  flex:none; appearance:none; cursor:pointer; width:100%;
+  padding:8px; border-radius:8px; border:1px dashed var(--line-2);
+  background:transparent; color:var(--ink-3);
+  font-family:var(--ui); font-size:11.5px; font-weight:500;
+}
+.morebtn:active{background:var(--surface-2)}
+
+/* ---------- secondary views ---------- */
+#details,#setup{
+  flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  display:flex; flex-direction:column; gap:12px;
+  padding:12px 14px calc(28px + env(safe-area-inset-bottom));
+}
+.panel{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:13px}
+.stack-sm{display:flex; flex-direction:column; gap:8px}
+.tiles{display:grid; grid-template-columns:repeat(3,1fr); gap:7px}
+.tile{background:var(--surface-2); border:1px solid var(--line); border-radius:8px; padding:9px 6px; text-align:center}
 .tile .t-lab{
-  font-size:9.5px; text-transform:uppercase; letter-spacing:.07em;
-  color:var(--ink-3); font-weight:600; display:block; margin-bottom:3px;
+  font-size:9px; text-transform:uppercase; letter-spacing:.07em;
+  color:var(--ink-3); font-weight:600; display:block; margin-bottom:2px;
 }
 .tile .t-val{
-  font-family:var(--display); font-weight:700; font-size:16px;
-  font-variant-numeric:tabular-nums; letter-spacing:-.01em; display:block;
+  font-family:var(--display); font-weight:700; font-size:15px;
+  font-variant-numeric:tabular-nums; display:block;
 }
 .tile.warn{border-color:var(--hold)} .tile.warn .t-val{color:var(--hold)}
 .tile.bad{border-color:var(--stop)} .tile.bad .t-val{color:var(--stop)}
-
-details.costs{margin-top:10px; border-top:1px solid var(--line); padding-top:10px}
-details.costs summary{
-  cursor:pointer; font-size:12px; color:var(--ink-2); list-style:none;
-  display:flex; justify-content:space-between; align-items:center;
-}
-details.costs summary::-webkit-details-marker{display:none}
-details.costs summary::after{content:"＋"; font-family:var(--mono); color:var(--ink-3)}
-details.costs[open] summary::after{content:"−"}
-.ledger{width:100%; border-collapse:collapse; margin-top:10px; font-family:var(--mono); font-size:12px}
+.ledger{width:100%; border-collapse:collapse; margin-top:10px; font-family:var(--mono); font-size:11.5px}
 .ledger td{padding:5px 0; border-bottom:1px dotted var(--line); color:var(--ink-2)}
 .ledger td:last-child{text-align:right; font-variant-numeric:tabular-nums; color:var(--ink)}
-.ledger tr.sum td{border-bottom:0; border-top:1px solid var(--line-2); font-weight:500; padding-top:8px; color:var(--ink)}
-.note{font-size:11.5px; color:var(--ink-3); margin:8px 0 0; line-height:1.4}
-
-/* ---------- toggles ---------- */
-.toggles{display:grid; grid-template-columns:1fr 1fr; gap:8px}
-.toggle{
-  appearance:none; cursor:pointer; text-align:left; padding:10px 11px;
-  border:1px solid var(--line-2); background:var(--surface); color:var(--ink-2);
-  border-radius:8px; font-family:var(--ui); font-size:13px; font-weight:500; line-height:1.25;
-}
-.toggle[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink); border-color:var(--accent)}
-.toggle small{display:block; font-size:10.5px; opacity:.7; font-weight:400; margin-top:2px}
-
-/* ---------- log ---------- */
-.log{list-style:none; margin:0; padding:0; font-family:var(--mono); font-size:12px}
-.log li{
-  display:flex; justify-content:space-between; gap:10px;
-  padding:6px 0; border-bottom:1px dotted var(--line); color:var(--ink-2);
-}
+.ledger tr.sum td{border-bottom:0; border-top:1px solid var(--line-2); font-weight:500; padding-top:7px; color:var(--ink)}
+.note{font-size:11px; color:var(--ink-3); margin:8px 0 0; line-height:1.4}
+.log{list-style:none; margin:0; padding:0; font-family:var(--mono); font-size:11.5px}
+.log li{display:flex; justify-content:space-between; gap:10px; padding:5px 0; border-bottom:1px dotted var(--line); color:var(--ink-2)}
 .log li:last-child{border-bottom:0}
 .log .who{color:var(--ink-3)}
 .log .amt{font-variant-numeric:tabular-nums; color:var(--ink)}
 .log li.mine .amt{color:var(--go); font-weight:500}
-.btnrow{display:flex; gap:8px; margin-top:10px}
 .btn{
-  appearance:none; cursor:pointer; flex:1; padding:10px; border-radius:8px;
+  appearance:none; cursor:pointer; width:100%; padding:10px; border-radius:8px;
   border:1px solid var(--line-2); background:var(--surface); color:var(--ink);
   font-family:var(--ui); font-size:13px; font-weight:500;
 }
@@ -272,16 +247,13 @@ details.costs[open] summary::after{content:"−"}
   color:var(--ink-2); line-height:1.4; margin:0;
 }
 .unitbanner strong{color:var(--ink); font-family:var(--mono); font-weight:500}
-
 .phead{
   font-family:var(--display); font-size:10.5px; font-weight:600;
   text-transform:uppercase; letter-spacing:.11em; color:var(--ink-3);
   margin:0 0 2px; padding-bottom:9px; border-bottom:1px solid var(--line);
 }
 .frow{display:flex; align-items:center; gap:12px; padding:10px 0 0}
-.frow label{
-  flex:1; min-width:0; font-size:13.5px; font-weight:500; color:var(--ink);
-}
+.frow label{flex:1; min-width:0; font-size:13.5px; font-weight:500; color:var(--ink)}
 .inpwrap{
   flex:none; width:132px; display:flex; align-items:center;
   border:1px solid var(--line-2); border-radius:7px; background:var(--surface);
@@ -293,114 +265,109 @@ details.costs[open] summary::after{content:"−"}
   padding:8px 2px 8px 9px; min-width:0;
 }
 .inpwrap input:focus{outline:none}
-.inpwrap .sfx{
-  font-family:var(--mono); font-size:11px; color:var(--ink-3);
-  padding:0 8px 0 4px; flex:none; width:30px;
-}
+.inpwrap .sfx{font-family:var(--mono); font-size:11px; color:var(--ink-3); padding:0 8px 0 4px; flex:none; width:30px}
 .inpwrap.wide{flex:1; width:auto; min-width:0}
 .inpwrap.wide input{width:100%; text-align:left; padding-right:9px}
-.fsub{
-  margin:3px 0 0; font-size:11.5px; color:var(--ink-3); line-height:1.35;
-  padding-left:1px;
-}
+.fsub{margin:3px 0 0; font-size:11.5px; color:var(--ink-3); line-height:1.35}
 .fsub .eq{font-family:var(--mono); color:var(--ink-2); font-variant-numeric:tabular-nums}
 .fsub .eq.bad{color:var(--stop); font-weight:500}
-.example-flag{
-  background:var(--surface-2); border:1px dashed var(--line-2); border-radius:8px;
-  padding:9px 11px; font-size:12px; color:var(--ink-2); line-height:1.4;
-}
+
 [hidden]{display:none!important}
-/* A real phone is the screen — drop the shell entirely */
+@media (prefers-reduced-motion:no-preference){ .verdict{transition:background-color .16s ease} }
+
+/* A real phone is the screen */
 @media (max-width:480px){
   body{display:block; min-height:0; padding:0; background:var(--ground)}
   .device{padding:0; border-radius:0; background:transparent; box-shadow:none}
-  .screen{width:auto; height:auto; border-radius:0; overflow:visible}
-  .limitbar{padding-top:calc(10px + env(safe-area-inset-top))}
-  .wrap{padding-bottom:calc(40px + env(safe-area-inset-bottom))}
-}
-@media (prefers-reduced-motion:no-preference){
-  .verdict{transition:background-color .18s ease}
-}
-@media (max-width:360px){
-  .tiles{grid-template-columns:1fr; }
-  .toggles{grid-template-columns:1fr}
+  .screen{width:auto; height:100dvh; border-radius:0}
 }
 </style>
 </head>
 <body>
+
 <div class="device">
 <div class="screen" id="screen">
 
-<div class="limitbar">
-  <div class="lb-inner">
-    <span class="lb-name" id="barName">Example auction</span>
+  <div class="limitbar">
+    <span class="lb-name" id="barName">4 Birch Court</span>
     <span>
       <span class="lb-label">Hard stop</span>
       <span class="lb-stop" id="barStop">$700,000</span>
     </span>
-    <button class="iconbtn" id="themeBtn" type="button" title="Switch light / dark" aria-label="Switch light / dark">◐</button>
+    <button class="iconbtn" id="undoBtn" type="button" title="Undo last change" aria-label="Undo last change">↶</button>
     <button class="iconbtn" id="setupBtn" type="button" title="Setup" aria-label="Open setup">⚙</button>
   </div>
-</div>
 
-<div class="wrap">
+  <!-- ==================== THE ONE SCREEN ==================== -->
+  <main id="live">
 
-<!-- ==================== LIVE ==================== -->
-<main id="live" class="stack" style="padding-top:14px">
+    <section class="floor">
+      <p class="eyebrow">Highest bid on the floor</p>
+      <div class="bidrow">
+        <button class="step" id="down" type="button" aria-label="Lower the floor bid">−</button>
+        <span class="bidwrap">
+          <input class="bidinput" id="bid" inputmode="decimal" autocomplete="off"
+                 aria-label="Highest bid on the floor, in thousands">
+          <span class="unit" aria-hidden="true">$k</span>
+        </span>
+        <button class="step" id="up" type="button" aria-label="Raise the floor bid">+</button>
+      </div>
+      <p class="bid-echo" id="bidEcho">$670,000</p>
+      <div class="chips" id="chips"></div>
+    </section>
 
-  <div class="example-flag" id="exampleFlag"></div>
+    <section class="verdict" id="verdict" data-tone="neutral" aria-live="polite">
+      <p class="v-kicker" id="vKicker">Your next bid</p>
+      <p class="v-main" id="vMain">—</p>
+      <p class="v-sub" id="vSub"></p>
+    </section>
 
-  <section class="panel bidbox">
-    <p class="eyebrow">Highest bid on the floor</p>
-    <div class="bidrow">
-      <button class="step" id="down" type="button" aria-label="Lower the current bid">−</button>
-      <span class="bidwrap">
-        <input class="bidinput" id="bid" inputmode="decimal" autocomplete="off"
-               aria-label="Highest bid on the floor, in thousands of dollars">
-        <span class="unit" aria-hidden="true">$k</span>
-      </span>
-      <button class="step" id="up" type="button" aria-label="Raise the current bid">+</button>
-    </div>
-    <p class="bid-echo" id="bidEcho">$670,000</p>
-    <div class="chips" id="chips"></div>
-    <div class="seg who" role="group" aria-label="Whose bid is it" style="margin-top:12px">
-      <button type="button" data-who="rival" aria-pressed="true">A rival's bid</button>
-      <button type="button" data-who="mine" aria-pressed="false">My bid</button>
-    </div>
-  </section>
-
-  <section class="verdict" id="verdict" data-tone="neutral" aria-live="polite">
-    <p class="v-kicker" id="vKicker">Waiting</p>
-    <p class="v-main" id="vMain">—</p>
-    <p class="v-sub" id="vSub"></p>
-    <span class="v-mode" id="vMode"></span>
-  </section>
-
-  <section class="panel">
-    <p class="eyebrow">Bids left before your hard stop</p>
     <div class="rungs">
+      <span class="lab">Bids left</span>
       <div class="pips" id="pips"></div>
       <span class="n" id="rungN">—</span>
     </div>
-    <p class="note" id="rungNote"></p>
-  </section>
 
-  <section class="panel">
-    <p class="eyebrow">If it's knocked down to you at <span id="moneyAt">—</span></p>
-    <div class="tiles">
-      <div class="tile"><span class="t-lab">All-in cost</span><span class="t-val" id="mAllIn">—</span></div>
-      <div class="tile"><span class="t-lab">Your cash out</span><span class="t-val" id="mCash">—</span></div>
-      <div class="tile" id="leftTile"><span class="t-lab">Cash left</span><span class="t-val" id="mLeft">—</span></div>
-    </div>
-    <details class="costs">
-      <summary><span>Every fee and tax in that number</span></summary>
+    <section class="scen">
+      <div class="seg" role="group" aria-label="Bidding pace">
+        <button type="button" data-pace="stalled" aria-pressed="false">Stalled</button>
+        <button type="button" data-pace="steady" aria-pressed="true">Steady</button>
+        <button type="button" data-pace="hot" aria-pressed="false">Hot</button>
+      </div>
+      <div class="seg" role="group" aria-label="Rival bidders">
+        <button type="button" data-rivals="0" aria-pressed="false">No rivals</button>
+        <button type="button" data-rivals="1" aria-pressed="true">1</button>
+        <button type="button" data-rivals="2" aria-pressed="false">2</button>
+        <button type="button" data-rivals="3" aria-pressed="false">3+</button>
+      </div>
+      <div class="flags">
+        <button class="flag" type="button" id="tMine" aria-pressed="false">My bid</button>
+        <button class="flag" type="button" id="tOnMarket" aria-pressed="false">On market</button>
+        <button class="flag" type="button" id="tVendor" aria-pressed="false">Vendor bid</button>
+      </div>
+    </section>
+
+    <button class="morebtn" id="moreBtn" type="button">Costs, bid log &amp; reset</button>
+  </main>
+
+  <!-- ==================== DETAILS ==================== -->
+  <main id="details" hidden>
+    <button class="btn primary" id="backBtn" type="button">Back to bidding</button>
+
+    <section class="panel">
+      <p class="eyebrow">If it's knocked down to you at <span id="moneyAt">—</span></p>
+      <div class="tiles">
+        <div class="tile"><span class="t-lab">All-in cost</span><span class="t-val" id="mAllIn">—</span></div>
+        <div class="tile"><span class="t-lab">Your cash out</span><span class="t-val" id="mCash">—</span></div>
+        <div class="tile" id="leftTile"><span class="t-lab">Cash left</span><span class="t-val" id="mLeft">—</span></div>
+      </div>
       <table class="ledger">
         <tbody>
           <tr><td>Purchase price</td><td id="cPrice">—</td></tr>
           <tr><td>Stamp duty <span id="dutyTag" style="color:var(--ink-3)"></span></td><td id="cDuty">—</td></tr>
           <tr><td>Land transfer registration</td><td id="cTransfer">—</td></tr>
           <tr><td>Mortgage registration <span id="mtgTag" style="color:var(--ink-3)"></span></td><td id="cMortgage">—</td></tr>
-          <tr><td>Conveyancing, inspections, rates, insurance</td><td id="cOther">—</td></tr>
+          <tr><td>Conveyancing, inspection, adjustments</td><td id="cOther">—</td></tr>
           <tr class="sum"><td>All-in cost</td><td id="cAllIn">—</td></tr>
           <tr><td>Less loan drawn</td><td id="cLoan">—</td></tr>
           <tr><td>Less government equity <span id="govTag" style="color:var(--ink-3)"></span></td><td id="cGov">—</td></tr>
@@ -408,142 +375,105 @@ details.costs[open] summary::after{content:"−"}
         </tbody>
       </table>
       <p class="note" id="dutyNote"></p>
-    </details>
-  </section>
+    </section>
 
-  <section class="panel stack-sm">
-    <p class="eyebrow" style="margin:0">What the room is doing</p>
-    <div class="seg" role="group" aria-label="Bidding pace">
-      <button type="button" data-pace="stalled" aria-pressed="false">Stalled</button>
-      <button type="button" data-pace="steady" aria-pressed="true">Steady</button>
-      <button type="button" data-pace="hot" aria-pressed="false">Hot</button>
-    </div>
-    <div class="seg" role="group" aria-label="Number of rival bidders" style="margin-top:2px">
-      <button type="button" data-rivals="0" aria-pressed="false">No rivals</button>
-      <button type="button" data-rivals="1" aria-pressed="true">1 rival</button>
-      <button type="button" data-rivals="2" aria-pressed="false">2 rivals</button>
-      <button type="button" data-rivals="3" aria-pressed="false">3+</button>
-    </div>
-    <div class="toggles" style="margin-top:2px">
-      <button class="toggle" type="button" id="tOnMarket" aria-pressed="false">
-        On the market<small>Auctioneer says reserve is met</small>
-      </button>
-      <button class="toggle" type="button" id="tVendor" aria-pressed="false">
-        Vendor bid<small>Last bid came from the auctioneer</small>
-      </button>
-    </div>
-  </section>
+    <section class="panel">
+      <p class="eyebrow">Bid log</p>
+      <ul class="log" id="log"><li><span class="who">nothing yet</span><span class="amt"></span></li></ul>
+    </section>
 
-  <section class="panel">
-    <p class="eyebrow">Bid log</p>
-    <ul class="log" id="log"><li><span class="who">nothing yet</span><span class="amt"></span></li></ul>
-    <div class="btnrow">
-      <button class="btn" id="undo" type="button">Undo</button>
+    <section class="stack-sm">
+      <button class="btn" id="themeBtn" type="button">Switch light / dark</button>
       <button class="btn danger" id="reset" type="button">Reset auction</button>
-    </div>
-  </section>
+    </section>
 
-  <p class="note">
-    Guidance only, from the numbers you enter. Stamp duty uses the Victorian first-home-buyer
-    principal-place-of-residence scale. Check anything that decides a bid with your conveyancer.
-  </p>
-</main>
+    <p class="note">
+      Guidance only, from the numbers you enter. Stamp duty uses the Victorian first-home-buyer
+      principal-place-of-residence scale. Check anything that decides a bid with your conveyancer.
+    </p>
+  </main>
 
-<!-- ==================== SETUP ==================== -->
-<main id="setup" class="stack" hidden style="padding-top:14px">
+  <!-- ==================== SETUP ==================== -->
+  <main id="setup" hidden>
+    <p class="unitbanner">
+      Money fields are in <strong>thousands</strong> — type <strong>670</strong> for $670,000.
+    </p>
 
-  <p class="unitbanner">
-    Money fields are in <strong>thousands</strong> — type <strong>670</strong> for $670,000.
-  </p>
+    <section class="panel">
+      <p class="phead">The auction</p>
+      <div class="frow">
+        <label for="fName">Property</label>
+        <span class="inpwrap wide"><input id="fName" type="text" autocomplete="off"></span>
+      </div>
+      <div class="frow">
+        <label for="fOpen">Opening bid</label>
+        <span class="inpwrap"><input id="fOpen" inputmode="decimal" autocomplete="off"><span class="sfx">k</span></span>
+      </div>
+      <p class="fsub" id="sub-open"></p>
+      <div class="frow">
+        <label for="fReserve">Reserve estimate</label>
+        <span class="inpwrap"><input id="fReserve" inputmode="decimal" autocomplete="off"
+          data-hint="below this it cannot sell; 0 if unknown"><span class="sfx">k</span></span>
+      </div>
+      <p class="fsub" id="sub-reserve"></p>
+      <div class="frow">
+        <label for="fTarget">Target</label>
+        <span class="inpwrap"><input id="fTarget" inputmode="decimal" autocomplete="off"
+          data-hint="the number you want to win at"><span class="sfx">k</span></span>
+      </div>
+      <p class="fsub" id="sub-target"></p>
+      <div class="frow">
+        <label for="fCeiling">Hard stop</label>
+        <span class="inpwrap"><input id="fCeiling" inputmode="decimal" autocomplete="off"
+          data-hint="never suggested past this"><span class="sfx">k</span></span>
+      </div>
+      <p class="fsub" id="sub-ceiling"></p>
+      <div class="frow">
+        <label for="fStep">Smallest increment</label>
+        <span class="inpwrap"><input id="fStep" inputmode="decimal" autocomplete="off"><span class="sfx">k</span></span>
+      </div>
+      <p class="fsub" id="sub-step"></p>
+    </section>
 
-  <section class="panel">
-    <p class="phead">The auction</p>
+    <section class="panel">
+      <p class="phead">The money</p>
+      <div class="frow">
+        <label for="fLoan">Loan drawn</label>
+        <span class="inpwrap"><input id="fLoan" inputmode="decimal" autocomplete="off"><span class="sfx">k</span></span>
+      </div>
+      <p class="fsub" id="sub-loan"></p>
+      <div class="frow">
+        <label for="fGov">Government equity</label>
+        <span class="inpwrap"><input id="fGov" inputmode="decimal" autocomplete="off"
+          data-hint="30 for Help to Buy on an existing home; 0 for none"><span class="sfx">%</span></span>
+      </div>
+      <p class="fsub" id="sub-gov"></p>
+      <div class="frow">
+        <label for="fFunds">Funds available</label>
+        <span class="inpwrap"><input id="fFunds" inputmode="decimal" autocomplete="off"
+          data-hint="every dollar you can put in on settlement day"><span class="sfx">k</span></span>
+      </div>
+      <p class="fsub" id="sub-funds"></p>
+      <div class="frow">
+        <label for="fMtg">Mortgages to register</label>
+        <span class="inpwrap"><input id="fMtg" inputmode="numeric" autocomplete="off"
+          data-hint="your lender&#39;s, plus a scheme&#39;s second mortgage"><span class="sfx">no.</span></span>
+      </div>
+      <p class="fsub" id="sub-mtg"></p>
+      <div class="frow">
+        <label for="fOther">Other costs</label>
+        <span class="inpwrap"><input id="fOther" inputmode="decimal" autocomplete="off"
+          data-hint="conveyancing, inspection, adjustments, insurance, buffer"><span class="sfx">k</span></span>
+      </div>
+      <p class="fsub" id="sub-other"></p>
+    </section>
 
-    <div class="frow">
-      <label for="fName">Property</label>
-      <span class="inpwrap wide"><input id="fName" type="text" autocomplete="off"></span>
-    </div>
-
-    <div class="frow">
-      <label for="fOpen">Opening bid</label>
-      <span class="inpwrap"><input id="fOpen" inputmode="decimal" autocomplete="off"><span class="sfx">k</span></span>
-    </div>
-    <p class="fsub" id="sub-open"></p>
-
-    <div class="frow">
-      <label for="fReserve">Reserve estimate</label>
-      <span class="inpwrap"><input id="fReserve" inputmode="decimal" autocomplete="off"
-        data-hint="below this it cannot sell; 0 if unknown"><span class="sfx">k</span></span>
-    </div>
-    <p class="fsub" id="sub-reserve"></p>
-
-    <div class="frow">
-      <label for="fTarget">Target</label>
-      <span class="inpwrap"><input id="fTarget" inputmode="decimal" autocomplete="off"
-        data-hint="the number you want to win at"><span class="sfx">k</span></span>
-    </div>
-    <p class="fsub" id="sub-target"></p>
-
-    <div class="frow">
-      <label for="fCeiling">Hard stop</label>
-      <span class="inpwrap"><input id="fCeiling" inputmode="decimal" autocomplete="off"
-        data-hint="never suggested past this"><span class="sfx">k</span></span>
-    </div>
-    <p class="fsub" id="sub-ceiling"></p>
-
-    <div class="frow">
-      <label for="fStep">Smallest increment</label>
-      <span class="inpwrap"><input id="fStep" inputmode="decimal" autocomplete="off"><span class="sfx">k</span></span>
-    </div>
-    <p class="fsub" id="sub-step"></p>
-  </section>
-
-  <section class="panel">
-    <p class="phead">The money</p>
-
-    <div class="frow">
-      <label for="fLoan">Loan drawn</label>
-      <span class="inpwrap"><input id="fLoan" inputmode="decimal" autocomplete="off"><span class="sfx">k</span></span>
-    </div>
-    <p class="fsub" id="sub-loan"></p>
-
-    <div class="frow">
-      <label for="fGov">Government equity</label>
-      <span class="inpwrap"><input id="fGov" inputmode="decimal" autocomplete="off"
-        data-hint="30 for Help to Buy on an existing home; 0 for none"><span class="sfx">%</span></span>
-    </div>
-    <p class="fsub" id="sub-gov"></p>
-
-    <div class="frow">
-      <label for="fFunds">Funds available</label>
-      <span class="inpwrap"><input id="fFunds" inputmode="decimal" autocomplete="off"
-        data-hint="every dollar you can put in on settlement day"><span class="sfx">k</span></span>
-    </div>
-    <p class="fsub" id="sub-funds"></p>
-
-    <div class="frow">
-      <label for="fMtg">Mortgages to register</label>
-      <span class="inpwrap"><input id="fMtg" inputmode="numeric" autocomplete="off"
-        data-hint="your lender&#39;s, plus a scheme&#39;s second mortgage"><span class="sfx">no.</span></span>
-    </div>
-    <p class="fsub" id="sub-mtg"></p>
-
-    <div class="frow">
-      <label for="fOther">Other costs</label>
-      <span class="inpwrap"><input id="fOther" inputmode="decimal" autocomplete="off"
-        data-hint="conveyancing, inspection, adjustments, insurance, buffer"><span class="sfx">k</span></span>
-    </div>
-    <p class="fsub" id="sub-other"></p>
-  </section>
-
-  <section class="panel stack-sm">
-    <button class="btn primary" id="saveBtn" type="button">Save and return</button>
-    <button class="btn" id="linkBtn" type="button">Copy prefill link</button>
-    <p class="fsub" id="linkMsg">A link that reopens these numbers. Keep it private — it holds your limit.</p>
-  </section>
-</main>
-
-</div>
+    <section class="stack-sm">
+      <button class="btn primary" id="saveBtn" type="button">Save and return</button>
+      <button class="btn" id="linkBtn" type="button">Copy prefill link</button>
+      <p class="fsub" id="linkMsg">A link that reopens these numbers. Keep it private — it holds your limit.</p>
+    </section>
+  </main>
 
 </div><!-- /screen -->
 </div><!-- /device -->
@@ -560,11 +490,9 @@ const KEY="bidladder.v1";
 
 let cfg = {...DEFAULTS};
 let st = { bid:DEFAULTS.open, mine:false, pace:"steady", rivals:1,
-           onMarket:false, vendor:false, log:[], example:true };
+           onMarket:false, vendor:false, log:[] };
 
 /* ---------------- money ---------------- */
-
-// Victorian general land transfer duty scale.
 function generalDuty(v){
   if(v<=25000)   return v*0.014;
   if(v<=130000)  return 350 + (v-25000)*0.024;
@@ -572,13 +500,11 @@ function generalDuty(v){
   if(v<=2000000) return v*0.055;
   return 110000 + (v-2000000)*0.065;
 }
-// First home buyer, principal place of residence: exempt to $600k, tapered to $750k.
 function fhbDuty(v){
   if(v<=600000) return 0;
   if(v>=750000) return generalDuty(v);
   return generalDuty(v)*(v-600000)/150000;
 }
-// Land Services Victoria electronic lodgement, 2026-27 schedule.
 function transferFee(v){ return Math.min(104.30 + 2.34*Math.floor(v/1000), 3614.00); }
 const MORTGAGE_FEE = 129.20;
 
@@ -592,103 +518,73 @@ function moneyK(v){
   return p + Math.round(a);
 }
 
-// Money is TYPED in thousands but STORED and calculated in dollars, so the duty
-// thresholds and the $2.34-per-$1,000 registration fee stay correct.
+// Money is TYPED in thousands but STORED in dollars, so the duty thresholds and
+// the $2.34-per-$1,000 registration fee stay correct.
 const K = 1000;
 const MONEY_FIELDS = new Set(["open","reserve","target","ceiling","step","loan","funds","other"]);
-function toK(v){
-  const s = v / K;
-  return Number.isInteger(s) ? String(s) : String(+s.toFixed(3));
-}
+function toK(v){ const s=v/K; return Number.isInteger(s) ? String(s) : String(+s.toFixed(3)); }
+
 function costsAt(price){
-  const duty = fhbDuty(price);
-  const transfer = transferFee(price);
-  const mortgage = MORTGAGE_FEE * Math.max(0, cfg.mtg);
-  const other = cfg.other;
-  const totalCosts = duty + transfer + mortgage + other;
-  const gov = price * (cfg.gov/100);
-  const equity = Math.max(0, price - cfg.loan - gov);
-  return { duty, transfer, mortgage, other, totalCosts,
-           gov, equity,
-           allIn: price + totalCosts,
-           cashOut: equity + totalCosts,
-           left: cfg.funds - (equity + totalCosts) };
+  const duty=fhbDuty(price), transfer=transferFee(price);
+  const mortgage=MORTGAGE_FEE*Math.max(0,cfg.mtg), other=cfg.other;
+  const totalCosts=duty+transfer+mortgage+other;
+  const gov=price*(cfg.gov/100);
+  const equity=Math.max(0, price-cfg.loan-gov);
+  return { duty, transfer, mortgage, other, totalCosts, gov, equity,
+           allIn:price+totalCosts, cashOut:equity+totalCosts,
+           left:cfg.funds-(equity+totalCosts) };
 }
 
 /* ---------------- the engine ---------------- */
-
-const roundTo = (v,m)=> Math.round(v/m)*m;
-
-function confidentStep(cur){
-  return Math.max(5*cfg.step, roundTo(cur*0.007, cfg.step));
-}
-function rungStep(remaining, rungs){
-  return Math.max(cfg.step, roundTo(remaining/rungs, cfg.step));
-}
-// Nudge off round multiples of five increments so the next bidder faces an
-// awkward step, and so you keep more rungs inside your ceiling.
-function deRound(bid, cur){
-  const round5 = cfg.step*5;
-  if(bid % round5 === 0 && bid - 2*cfg.step > cur) return bid - 2*cfg.step;
-  return bid;
+const roundTo=(v,m)=>Math.round(v/m)*m;
+const confidentStep = cur => Math.max(5*cfg.step, roundTo(cur*0.007, cfg.step));
+const rungStep = (rem,n) => Math.max(cfg.step, roundTo(rem/n, cfg.step));
+function deRound(bid,cur){
+  const r5=cfg.step*5;
+  return (bid%r5===0 && bid-2*cfg.step>cur) ? bid-2*cfg.step : bid;
 }
 
 function advise(){
-  const cur = st.bid, C = cfg.ceiling, T = cfg.target, R = cfg.reserve;
+  const cur=st.bid, C=cfg.ceiling, T=cfg.target, R=cfg.reserve;
 
-  if(cur >= C)
-    return {tone:"stop", kicker:"Your limit", main:"STOP",
-            sub:"The floor is at or past your hard stop. Let it go — you decided this before you walked in.", mode:"limit"};
+  if(cur>=C) return {tone:"stop", kicker:"Your limit", main:"STOP",
+    sub:"At or past your hard stop. Let it go."};
 
-  if(st.mine)
-    return {tone:"ontop", kicker:"You are the highest bidder", main:"SAY NOTHING",
-            sub:"Never bid against yourself. Wait for a rival, the hammer, or the pass-in.", mode:"holding"};
+  if(st.mine) return {tone:"neutral", kicker:"You are highest", main:"SAY NOTHING",
+    sub:"Never bid against yourself. Wait for a rival or the pass-in."};
 
-  if(st.vendor && !st.onMarket)
-    return {tone:"hold", kicker:"That was a vendor bid", main:"HOLD",
-            sub:"Not a competitor — the auctioneer is bidding for the vendor because the reserve is not met. Answering it bids against nobody.", mode:"vendor bid"};
+  if(st.vendor && !st.onMarket) return {tone:"hold", kicker:"Vendor bid", main:"HOLD",
+    sub:"The auctioneer's bid, not a rival. Answering it bids against nobody."};
 
   const belowReserve = R>0 && cur<R && !st.onMarket;
   let step, mode, why;
-
   if(belowReserve && st.rivals<=1){
     step = st.pace==="stalled" ? cfg.step : cfg.step*2;
-    mode = "pass-in play";
-    why  = "Below the reserve it cannot sell, so the only prize is being top bidder when it passes in. Take it in the smallest step the auctioneer will accept.";
+    mode="pass-in play"; why="Below reserve it can't sell — bid small, own the pass-in.";
   } else if(belowReserve){
     step = confidentStep(cur);
-    mode = "shake-out";
-    why  = "Two or more live rivals below the reserve. Confident, round steps thin the field — being ground up in small increments only helps the vendor reach their reserve.";
+    mode="shake-out";    why="Two or more rivals below reserve — confident steps thin the field.";
   } else {
     step = rungStep(C-cur, 4);
     mode = st.onMarket ? "on the market" : "real contest";
-    why  = "It will sell now. Size each step so your ceiling still holds several bids — the bidder with rungs left wins the last one.";
+    why="It will sell — keep several rungs under your stop.";
   }
 
-  let bid = cur + Math.max(step, cfg.step);
-  bid = roundTo(bid, cfg.step);
-  if(bid <= cur) bid = cur + cfg.step;
-  if(mode!=="shake-out") bid = deRound(bid, cur);
-  if(bid > C) bid = C;
-  if(bid <= cur)
-    return {tone:"stop", kicker:"Your limit", main:"STOP",
-            sub:"The next legal step is past your hard stop.", mode:"limit"};
+  let bid = roundTo(cur+Math.max(step,cfg.step), cfg.step);
+  if(bid<=cur) bid = cur+cfg.step;
+  if(mode!=="shake-out") bid = deRound(bid,cur);
+  if(bid>C) bid = C;
+  if(bid<=cur) return {tone:"stop", kicker:"Your limit", main:"STOP",
+    sub:"The next legal step is past your hard stop."};
 
-  const m = costsAt(bid);
-  if(cfg.funds>0 && m.left < 0)
-    return {tone:"stop", kicker:"You cannot fund this", main:"STOP",
-            sub:`At ${money(bid)} you are ${money(-m.left)} short after stamp duty and costs. Your real limit is lower than your hard stop.`,
-            mode:"funds"};
+  if(cfg.funds>0 && costsAt(bid).left<0) return {tone:"stop", kicker:"Can't fund this", main:"STOP",
+    sub:`${money(bid)} is beyond what your funds cover after duty and costs.`};
 
-  if(bid > T && st.rivals===0)
-    return {tone:"hold", kicker:"Past your target, nobody bidding", main:"HOLD",
-            sub:`Nothing is pushing you above ${money(T)}. Do not cross your target on momentum alone — wait for a genuine rival bid.`,
-            mode};
+  if(bid>T && st.rivals===0) return {tone:"hold", kicker:"Past target, nobody bidding", main:"HOLD",
+    sub:`Nothing is pushing you above ${money(T)}. Don't cross it on momentum.`, mode};
 
-  if(bid > T)
-    return {tone:"hold", kicker:"Above target — rival is live", main:money(bid),
-            sub:`Past your ${money(T)} target. Justified only because a rival is still bidding. ${money(C)} is where you stop.`,
-            mode, amount:bid};
+  if(bid>T) return {tone:"hold", kicker:"Above target · rival live", main:money(bid),
+    sub:`Past ${money(T)}. Justified only by a live rival.`, mode, amount:bid};
 
   return {tone:"go", kicker:"Your next bid", main:money(bid), sub:why, mode, amount:bid};
 }
@@ -696,57 +592,42 @@ function advise(){
 function rungsLeft(){
   const C=cfg.ceiling; let cur=st.bid, n=0;
   if(cur>=C) return 0;
-  const belowReserve = cfg.reserve>0 && cur<cfg.reserve && !st.onMarket;
+  const below = cfg.reserve>0 && cur<cfg.reserve && !st.onMarket;
   while(cur<C && n<12){
     let s;
-    if(belowReserve && st.rivals<=1) s = st.pace==="stalled" ? cfg.step : cfg.step*2;
-    else if(belowReserve)            s = confidentStep(cur);
-    else                             s = rungStep(C-cur, 4);
-    cur += Math.max(s, cfg.step); n++;
+    if(below && st.rivals<=1) s = st.pace==="stalled" ? cfg.step : cfg.step*2;
+    else if(below)            s = confidentStep(cur);
+    else                      s = rungStep(C-cur,4);
+    cur += Math.max(s,cfg.step); n++;
   }
   return n;
 }
 
 /* ---------------- render ---------------- */
-
 const $ = id => document.getElementById(id);
-const toTop = ()=>{ const s=$('screen'); if(s) s.scrollTop=0; window.scrollTo(0,0); };
 let bidFocused = false;
 
 function render(){
   $("barName").textContent = cfg.name || "Auction";
   $("barStop").textContent = money(cfg.ceiling);
-  const ef = $("exampleFlag");
-  ef.hidden = !st.example;
-  if(st.example){
-    ef.textContent = "Loaded ";
-    const b = document.createElement("strong");
-    b.textContent = cfg.name || "this auction";
-    ef.append(b, ". Check these numbers in ⚙ before you bid.");
-  }
-
   if(!bidFocused) $("bid").value = toK(st.bid);
   $("bidEcho").textContent = money(st.bid);
 
-  document.querySelectorAll("[data-who]").forEach(b=>
-    b.setAttribute("aria-pressed", String((b.dataset.who==="mine")===st.mine)));
   document.querySelectorAll("[data-pace]").forEach(b=>
     b.setAttribute("aria-pressed", String(b.dataset.pace===st.pace)));
   document.querySelectorAll("[data-rivals]").forEach(b=>
     b.setAttribute("aria-pressed", String(+b.dataset.rivals===st.rivals)));
+  $("tMine").setAttribute("aria-pressed", String(st.mine));
   $("tOnMarket").setAttribute("aria-pressed", String(st.onMarket));
   $("tVendor").setAttribute("aria-pressed", String(st.vendor));
 
   const a = advise();
-  const v = $("verdict");
-  v.dataset.tone = a.tone;
-  $("vKicker").textContent = a.kicker;
+  $("verdict").dataset.tone = a.tone;
+  $("vKicker").textContent = a.mode ? a.kicker + " · " + a.mode : a.kicker;
   $("vMain").textContent = a.main;
   $("vSub").textContent = a.sub;
-  $("vMode").textContent = a.mode;
 
-  const n = rungsLeft();
-  const pips = $("pips");
+  const n = rungsLeft(), pips = $("pips");
   pips.innerHTML = "";
   for(let i=0;i<Math.max(n,1);i++){
     const d=document.createElement("div");
@@ -754,20 +635,13 @@ function render(){
     pips.appendChild(d);
   }
   $("rungN").textContent = n===0 ? "none" : n===12 ? "12+" : String(n);
-  $("rungNote").textContent = n===0
-    ? "You are at your hard stop."
-    : `About ${n} more bid${n===1?"":"s"} between ${money(st.bid)} and ${money(cfg.ceiling)} at the current step size.`;
 
-  const price = a.amount || st.bid;
-  const m = costsAt(price);
+  const price = a.amount || st.bid, m = costsAt(price);
   $("moneyAt").textContent = money(price);
   $("mAllIn").textContent = moneyK(m.allIn);
   $("mCash").textContent  = moneyK(m.cashOut);
   $("mLeft").textContent  = moneyK(m.left);
-
-  const lt = $("leftTile");
-  lt.className = "tile" + (m.left<0 ? " bad" : m.left < cfg.funds*0.12 ? " warn" : "");
-
+  $("leftTile").className = "tile" + (m.left<0 ? " bad" : m.left < cfg.funds*0.12 ? " warn" : "");
   $("cPrice").textContent    = money(price);
   $("cDuty").textContent     = money(m.duty);
   $("cTransfer").textContent = money(m.transfer);
@@ -777,23 +651,22 @@ function render(){
   $("cLoan").textContent     = "−" + money(cfg.loan);
   $("cGov").textContent      = "−" + money(m.gov);
   $("cCash").textContent     = money(m.cashOut);
-  $("mtgTag").textContent    = `× ${cfg.mtg}`;
-  $("govTag").textContent    = cfg.gov ? `${cfg.gov}%` : "";
+  $("mtgTag").textContent    = "× " + cfg.mtg;
+  $("govTag").textContent    = cfg.gov ? cfg.gov + "%" : "";
   $("dutyTag").textContent   = price<=600000 ? "first-home exempt"
-                             : price<750000 ? "first-home concession"
-                             : "no concession";
+                             : price<750000 ? "first-home concession" : "no concession";
   $("dutyNote").textContent  = price<=600000
-    ? "Under $600,000 a first home buyer pays no Victorian stamp duty on a principal place of residence."
+    ? "Under $600,000 a first home buyer pays no Victorian duty on a principal place of residence."
     : price<750000
       ? `The concession tapers away between $600,000 and $750,000, so duty rises about 25–32c per extra dollar of price. Full duty here would be ${money(generalDuty(price))}.`
-      : "Above $750,000 the first-home concession is gone entirely and full duty applies.";
+      : "Above $750,000 the first-home concession is gone entirely.";
 
   const log = $("log");
   log.innerHTML = "";
   if(!st.log.length){
     log.innerHTML = '<li><span class="who">nothing yet</span><span class="amt"></span></li>';
   } else {
-    st.log.slice(-8).reverse().forEach(e=>{
+    st.log.slice(-10).reverse().forEach(e=>{
       const li=document.createElement("li");
       if(e.mine) li.className="mine";
       li.innerHTML = `<span class="who">${e.mine?"you":"rival"}</span><span class="amt">${money(e.v)}</span>`;
@@ -803,93 +676,65 @@ function render(){
   save();
 }
 
-/* ---------------- state plumbing ---------------- */
-
-function push(v, mine){
-  st.log.push({v, mine});
-  st.bid = v; st.mine = mine; st.example = false;
-}
+/* ---------------- state ---------------- */
 function setBid(v){
   v = Math.max(0, Math.round(v));
   if(v===st.bid) return;
-  push(v, st.mine);
+  st.log.push({v, mine:st.mine});
+  st.bid = v;
   render();
 }
-
-function save(){
-  try{ localStorage.setItem(KEY, JSON.stringify({cfg, st})); }catch(e){}
-}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify({cfg,st})); }catch(e){} }
 function load(){
   try{
     const raw = localStorage.getItem(KEY);
-    if(raw){
-      const d = JSON.parse(raw);
-      if(d.cfg) cfg = {...DEFAULTS, ...d.cfg};
-      if(d.st)  st  = {...st, ...d.st};
-    }
+    if(raw){ const d=JSON.parse(raw); if(d.cfg) cfg={...DEFAULTS,...d.cfg}; if(d.st) st={...st,...d.st}; }
   }catch(e){}
-
   const q = new URLSearchParams(location.search);
   if([...q.keys()].length){
-    const num = (k,f)=>{ const v=parseFloat(q.get(k)); return isNaN(v)?f:v; };
+    const num=(k,f)=>{ const v=parseFloat(q.get(k)); return isNaN(v)?f:v; };
     if(q.get("name")) cfg.name = q.get("name");
-    cfg.open    = num("open",    cfg.open);
-    cfg.reserve = num("reserve", cfg.reserve);
-    cfg.target  = num("target",  cfg.target);
-    cfg.ceiling = num("ceiling", cfg.ceiling);
-    cfg.step    = num("step",    cfg.step);
-    cfg.loan    = num("loan",    cfg.loan);
-    cfg.gov     = num("gov",     cfg.gov);
-    cfg.funds   = num("funds",   cfg.funds);
-    cfg.mtg     = num("mtg",     cfg.mtg);
-    cfg.other   = num("other",   cfg.other);
-    st = {bid:cfg.open, mine:false, pace:"steady", rivals:1,
-          onMarket:false, vendor:false, log:[], example:false};
+    for(const k of ["open","reserve","target","ceiling","step","loan","gov","funds","mtg","other"]) cfg[k]=num(k,cfg[k]);
+    st = {bid:cfg.open, mine:false, pace:"steady", rivals:1, onMarket:false, vendor:false, log:[]};
     history.replaceState(null,"",location.pathname);
   }
 }
 
 /* ---------------- events ---------------- */
-
-const parseNum = s => { const v = parseFloat(String(s).replace(/[^0-9.]/g,"")); return isNaN(v)?0:v; };
+const parseNum = s => { const v=parseFloat(String(s).replace(/[^0-9.]/g,"")); return isNaN(v)?0:v; };
 
 $("bid").addEventListener("focus", e=>{ bidFocused=true; e.target.select(); });
 $("bid").addEventListener("blur",  e=>{ bidFocused=false; setBid(parseNum(e.target.value)*K); render(); });
 $("bid").addEventListener("keydown", e=>{ if(e.key==="Enter") e.target.blur(); });
-
 $("up").addEventListener("click",   ()=> setBid(st.bid + cfg.step));
 $("down").addEventListener("click", ()=> setBid(Math.max(0, st.bid - cfg.step)));
 
 function buildChips(){
-  const c = $("chips"); c.innerHTML="";
-  const mults = [1,2,5,10,25];
-  mults.forEach(m=>{
-    const amt = cfg.step*m;
-    const b=document.createElement("button");
-    b.type="button"; b.className="chip";
-    b.textContent = "+" + moneyK(amt);
-    b.addEventListener("click", ()=> setBid(st.bid + amt));
+  const c=$("chips"); c.innerHTML="";
+  [1,2,5,10].forEach(mult=>{
+    const amt=cfg.step*mult, b=document.createElement("button");
+    b.type="button"; b.className="chip"; b.textContent="+"+moneyK(amt);
+    b.addEventListener("click", ()=> setBid(st.bid+amt));
     c.appendChild(b);
   });
   const minus=document.createElement("button");
   minus.type="button"; minus.className="chip minus";
-  minus.textContent = "−" + moneyK(cfg.step);
-  minus.title = "Correct a mis-tap";
+  minus.textContent="−"+moneyK(cfg.step); minus.title="Correct a mis-tap";
   minus.addEventListener("click", ()=> setBid(Math.max(0, st.bid-cfg.step)));
   c.appendChild(minus);
 }
 
-document.querySelectorAll("[data-who]").forEach(b=> b.addEventListener("click", ()=>{
-  st.mine = b.dataset.who==="mine";
-  if(st.log.length) st.log[st.log.length-1].mine = st.mine;
-  render();
-}));
 document.querySelectorAll("[data-pace]").forEach(b=> b.addEventListener("click", ()=>{ st.pace=b.dataset.pace; render(); }));
 document.querySelectorAll("[data-rivals]").forEach(b=> b.addEventListener("click", ()=>{ st.rivals=+b.dataset.rivals; render(); }));
+$("tMine").addEventListener("click", ()=>{
+  st.mine = !st.mine;
+  if(st.log.length) st.log[st.log.length-1].mine = st.mine;
+  render();
+});
 $("tOnMarket").addEventListener("click", ()=>{ st.onMarket=!st.onMarket; if(st.onMarket) st.vendor=false; render(); });
 $("tVendor").addEventListener("click",   ()=>{ st.vendor=!st.vendor; render(); });
 
-$("undo").addEventListener("click", ()=>{
+$("undoBtn").addEventListener("click", ()=>{
   st.log.pop();
   const last = st.log[st.log.length-1];
   st.bid  = last ? last.v : cfg.open;
@@ -897,94 +742,87 @@ $("undo").addEventListener("click", ()=>{
   render();
 });
 $("reset").addEventListener("click", ()=>{
-  st = {bid:cfg.open, mine:false, pace:"steady", rivals:1,
-        onMarket:false, vendor:false, log:[], example:false};
-  render();
+  st = {bid:cfg.open, mine:false, pace:"steady", rivals:1, onMarket:false, vendor:false, log:[]};
+  showLive(); render();
 });
-
 $("themeBtn").addEventListener("click", ()=>{
-  const cur = document.documentElement.getAttribute("data-theme");
-  const dark = cur ? cur==="dark"
-    : matchMedia("(prefers-color-scheme: dark)").matches;
-  document.documentElement.setAttribute("data-theme", dark ? "light":"dark");
+  const cur=document.documentElement.getAttribute("data-theme");
+  const dark = cur ? cur==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.setAttribute("data-theme", dark?"light":"dark");
   try{ localStorage.setItem("bidladder.theme", dark?"light":"dark"); }catch(e){}
 });
 
-/* ---- setup view ---- */
+/* ---------------- views ---------------- */
+function show(which){
+  for(const id of ["live","details","setup"]) $(id).hidden = (id!==which);
+  const s=$(which); if(s) s.scrollTop=0;
+}
+const showLive = ()=> show("live");
+$("moreBtn").addEventListener("click", ()=> show("details"));
+$("backBtn").addEventListener("click", showLive);
+
+/* ---------------- setup ---------------- */
 const F = {name:"fName", open:"fOpen", reserve:"fReserve", target:"fTarget",
            ceiling:"fCeiling", step:"fStep", loan:"fLoan", gov:"fGov",
            funds:"fFunds", mtg:"fMtg", other:"fOther"};
 
-// Each money field echoes what it actually means in dollars, so typing 670,000
-// out of habit shows "$670,000,000" in red instead of silently disabling the
-// hard stop.
 const echoUpdaters = [];
 Object.keys(F).forEach(k=>{
-  const inp = $(F[k]), sub = $("sub-"+k);
+  const inp=$(F[k]), sub=$("sub-"+k);
   if(!sub) return;
-  const hint = inp.dataset.hint || "", isMoney = MONEY_FIELDS.has(k);
+  const hint=inp.dataset.hint||"", isMoney=MONEY_FIELDS.has(k);
   const upd = ()=>{
-    const raw = parseNum(inp.value), v = raw * (isMoney ? K : 1);
-    sub.textContent = "";
+    const raw=parseNum(inp.value), v=raw*(isMoney?K:1);
+    sub.textContent="";
     if(isMoney && raw){
-      const eq = document.createElement("span");
-      eq.className = "eq" + (v > 50000000 ? " bad" : "");
-      eq.textContent = "= " + money(v);
+      const eq=document.createElement("span");
+      eq.className="eq"+(v>50000000?" bad":"");
+      eq.textContent="= "+money(v);
       sub.append(eq);
-      if(hint) sub.append(" · " + hint);
-    } else if(hint){
-      sub.append(hint);
-    }
+      if(hint) sub.append(" · "+hint);
+    } else if(hint){ sub.append(hint); }
   };
   inp.addEventListener("input", upd);
   echoUpdaters.push(upd);
 });
 const refreshEchoes = ()=> echoUpdaters.forEach(f=>f());
 
-function openSetup(){
-  for(const k in F) $(F[k]).value = MONEY_FIELDS.has(k) ? toK(cfg[k]) : cfg[k];
-  refreshEchoes();
-  $("live").hidden = true; $("setup").hidden = false;
-  toTop();
-}
 function readSetup(){
   for(const k in F){
-    if(k === "name") cfg.name = $(F[k]).value.trim() || "Auction";
-    else cfg[k] = parseNum($(F[k]).value) * (MONEY_FIELDS.has(k) ? K : 1);
+    if(k==="name") cfg.name = $(F[k]).value.trim() || "Auction";
+    else cfg[k] = parseNum($(F[k]).value) * (MONEY_FIELDS.has(k)?K:1);
   }
 }
-function closeSetup(){
+$("setupBtn").addEventListener("click", ()=>{
+  if($("setup").hidden){
+    for(const k in F) $(F[k]).value = MONEY_FIELDS.has(k) ? toK(cfg[k]) : cfg[k];
+    refreshEchoes(); show("setup");
+  } else { saveSetup(); }
+});
+function saveSetup(){
   const prevOpen = cfg.open;
   readSetup();
   if(cfg.step < 100) cfg.step = 100;
   if(cfg.ceiling < cfg.target) cfg.ceiling = cfg.target;
-  if(st.example || st.bid < cfg.open || cfg.open !== prevOpen){ st.bid = cfg.open; st.log = []; }
-  st.example = false;
-  buildChips();
-  $("setup").hidden = true; $("live").hidden = false;
-  toTop();
-  render();
+  if(st.bid < cfg.open || cfg.open !== prevOpen){ st.bid = cfg.open; st.log = []; }
+  buildChips(); showLive(); render();
 }
-$("setupBtn").addEventListener("click", ()=> $("setup").hidden ? openSetup() : closeSetup());
-$("saveBtn").addEventListener("click", closeSetup);
+$("saveBtn").addEventListener("click", saveSetup);
 
 $("linkBtn").addEventListener("click", ()=>{
   readSetup();
-  const q = new URLSearchParams();
+  const q=new URLSearchParams();
   for(const k in F) q.set(k, cfg[k]);
   const url = location.origin + location.pathname + "?" + q.toString();
   const done = ok => { $("linkMsg").textContent = ok
-    ? "Copied. Bookmark it on your phone — it contains your limit, so keep it to yourself."
-    : "Copy failed. The link is in the address bar — copy it from there."; };
+    ? "Copied. Bookmark it — it holds your limit, so keep it private."
+    : "Copy failed. The link is in the address bar."; };
   if(navigator.clipboard) navigator.clipboard.writeText(url).then(()=>done(true),()=>{ history.replaceState(null,"",url); done(false); });
   else { history.replaceState(null,"",url); done(false); }
 });
 
 /* ---------------- boot ---------------- */
-try{
-  const t = localStorage.getItem("bidladder.theme");
-  if(t) document.documentElement.setAttribute("data-theme", t);
-}catch(e){}
+try{ const t=localStorage.getItem("bidladder.theme"); if(t) document.documentElement.setAttribute("data-theme",t); }catch(e){}
 load();
 buildChips();
 render();
