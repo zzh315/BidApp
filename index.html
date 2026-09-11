@@ -175,7 +175,7 @@ body{
 }
 .seg button:last-child{border-right:0}
 .seg button[aria-pressed="true"]{background:var(--accent); color:var(--accent-ink); font-weight:600}
-.flags{display:grid; grid-template-columns:repeat(2,1fr); gap:6px}
+.flags{display:grid; grid-template-columns:1fr; gap:6px}
 .flag{
   appearance:none; cursor:pointer; padding:12px 2px; border-radius:8px;
   border:1px solid var(--line-2); background:var(--surface); color:var(--ink-2);
@@ -221,7 +221,6 @@ body{
 .log li:last-child{border-bottom:0}
 .log .who{color:var(--ink-3)}
 .log .amt{font-variant-numeric:tabular-nums; color:var(--ink)}
-.log li.mine .amt{color:var(--go); font-weight:500}
 .btn{
   appearance:none; cursor:pointer; width:100%; padding:10px; border-radius:8px;
   border:1px solid var(--line-2); background:var(--surface); color:var(--ink);
@@ -325,7 +324,6 @@ body{
         <button type="button" data-rivals="3" aria-pressed="false">3+</button>
       </div>
       <div class="flags">
-        <button class="flag" type="button" id="tMine" aria-pressed="false">My bid</button>
         <button class="flag" type="button" id="tOnMarket" aria-pressed="false">On the market</button>
       </div>
     </section>
@@ -473,8 +471,7 @@ const DEFAULTS = {
 const KEY="bidladder.v1";
 
 let cfg = {...DEFAULTS};
-let st = { bid:DEFAULTS.open, mine:false, pace:"steady", rivals:1,
-           onMarket:false, log:[] };
+let st = { bid:DEFAULTS.open, pace:"steady", rivals:1, onMarket:false, log:[] };
 
 /* ---------------- money ---------------- */
 function generalDuty(v){
@@ -534,9 +531,6 @@ function advise(){
 
   if(cur>=C) return {tone:"stop", kicker:"Your limit", main:"STOP",
     sub:"At or past your hard stop. Let it go."};
-
-  if(st.mine) return {tone:"neutral", kicker:"You are highest", main:"SAY NOTHING",
-    sub:"Never bid against yourself. Wait for a rival or the pass-in."};
 
   const belowReserve = R>0 && cur<R && !st.onMarket;
   let step, mode, why;
@@ -598,7 +592,6 @@ function render(){
     b.setAttribute("aria-pressed", String(b.dataset.pace===st.pace)));
   document.querySelectorAll("[data-rivals]").forEach(b=>
     b.setAttribute("aria-pressed", String(+b.dataset.rivals===st.rivals)));
-  $("tMine").setAttribute("aria-pressed", String(st.mine));
   $("tOnMarket").setAttribute("aria-pressed", String(st.onMarket));
   
   const a = advise();
@@ -642,10 +635,12 @@ function render(){
   if(!st.log.length){
     log.innerHTML = '<li><span class="who">nothing yet</span><span class="amt"></span></li>';
   } else {
-    st.log.slice(-10).reverse().forEach(e=>{
+    const seen = st.log.slice(-10);
+    const base = st.log.length>10 ? st.log[st.log.length-11].v : cfg.open;
+    seen.map((e,i)=>({v:e.v, d:e.v-(i ? seen[i-1].v : base)})).reverse().forEach(e=>{
       const li=document.createElement("li");
-      if(e.mine) li.className="mine";
-      li.innerHTML = `<span class="who">${e.mine?"you":"rival"}</span><span class="amt">${money(e.v)}</span>`;
+      li.innerHTML = `<span class="who">${e.d>=0?"+":"−"}${moneyK(Math.abs(e.d))}</span>`
+                   + `<span class="amt">${money(e.v)}</span>`;
       log.appendChild(li);
     });
   }
@@ -656,7 +651,7 @@ function render(){
 function setBid(v){
   v = Math.max(0, Math.round(v));
   if(v===st.bid) return;
-  st.log.push({v, mine:st.mine});
+  st.log.push({v});
   st.bid = v;
   render();
 }
@@ -671,7 +666,7 @@ function load(){
     const num=(k,f)=>{ const v=parseFloat(q.get(k)); return isNaN(v)?f:v; };
     if(q.get("name")) cfg.name = q.get("name");
     for(const k of ["open","reserve","target","ceiling","step","loan","gov","funds","mtg","other"]) cfg[k]=num(k,cfg[k]);
-    st = {bid:cfg.open, mine:false, pace:"steady", rivals:1, onMarket:false, log:[]};
+    st = {bid:cfg.open, pace:"steady", rivals:1, onMarket:false, log:[]};
     history.replaceState(null,"",location.pathname);
   }
 }
@@ -702,22 +697,16 @@ function buildChips(){
 
 document.querySelectorAll("[data-pace]").forEach(b=> b.addEventListener("click", ()=>{ st.pace=b.dataset.pace; render(); }));
 document.querySelectorAll("[data-rivals]").forEach(b=> b.addEventListener("click", ()=>{ st.rivals=+b.dataset.rivals; render(); }));
-$("tMine").addEventListener("click", ()=>{
-  st.mine = !st.mine;
-  if(st.log.length) st.log[st.log.length-1].mine = st.mine;
-  render();
-});
 $("tOnMarket").addEventListener("click", ()=>{ st.onMarket=!st.onMarket; render(); });
 
 $("undoBtn").addEventListener("click", ()=>{
   st.log.pop();
   const last = st.log[st.log.length-1];
   st.bid  = last ? last.v : cfg.open;
-  st.mine = last ? last.mine : false;
   render();
 });
 $("reset").addEventListener("click", ()=>{
-  st = {bid:cfg.open, mine:false, pace:"steady", rivals:1, onMarket:false, log:[]};
+  st = {bid:cfg.open, pace:"steady", rivals:1, onMarket:false, log:[]};
   showLive(); render();
 });
 $("themeBtn").addEventListener("click", ()=>{
