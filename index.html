@@ -55,6 +55,14 @@
 }
 
 *{box-sizing:border-box}
+/* Rapid taps on the steppers and chips must register as taps, not as a
+   double-tap zoom. manipulation kills the double-tap gesture while leaving
+   scrolling and deliberate pinch-zoom intact. */
+html{touch-action:manipulation}
+button, input{touch-action:manipulation; -webkit-tap-highlight-color:transparent}
+button{
+  user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
+}
 body{
   margin:0; background:var(--stage); color:var(--ink);
   font-family:var(--ui); font-size:15px; line-height:1.45;
