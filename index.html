@@ -538,9 +538,19 @@ function advise(){
   if(bid < cur + cfg.step) return {tone:"stop", kicker:"Your limit", main:"STOP",
     sub:`A ${money(cfg.step)} raise would take you past ${money(C)}.`};
 
+  // Rival limits cluster on round numbers — "we'll go to seven hundred". A
+  // thousand over one beats that limit outright, and breaks the rhythm of a
+  // called sequence. Only worth doing when the auctioneer is taking small
+  // raises, because into a $5k or $10k call a non-standard bid gets waved off.
+  let barrier = false;
+  if(bid % 10000 === 0 && cfg.step <= 2000 && bid + NUDGE <= C){
+    bid += NUDGE; barrier = true;
+  }
+
   if(cfg.funds>0 && costsAt(bid).left<0) return {tone:"stop", kicker:"Can't fund this", main:"STOP",
     sub:`${money(bid)} is beyond what your funds cover after duty and costs.`};
 
+  if(barrier) why = `A thousand over ${money(bid-NUDGE)} — that is where a rival's limit sits.`;
   return {tone:"go", kicker:"Your next bid", main:money(bid), sub:why, mode, amount:bid};
 }
 
